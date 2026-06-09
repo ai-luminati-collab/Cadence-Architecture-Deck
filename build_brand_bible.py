@@ -1,4 +1,4 @@
-"""PremAI + Fluso Brand Bible v2 - Swiss design system."""
+"""PremAI + Fluso Brand Bible v3 - monochrome Swiss system, portfolio architecture."""
 import math
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
@@ -8,22 +8,19 @@ from pptx.enum.shapes import MSO_SHAPE
 
 def rgb(r, g, b): return RGBColor(r, g, b)
 
-# ── Verified palette (logo.svg, static.premai.io, fetched 9 Jun 2026) ──
-PERI   = rgb(127, 150, 255)   # 7F96FF gradient stop 0
-CORAL  = rgb(245, 142, 142)   # F58E8E gradient stop 0.5
-SAND   = rgb(242, 211, 152)   # F2D398 gradient stop 1
-# Neutrals (from existing PremAI deck system)
-PAPER  = rgb(250, 249, 245)   # FAF9F5
-PAPER2 = rgb(236, 234, 225)   # ECEAE1
-INK    = rgb(23, 23, 27)      # 17171B
-GRAY   = rgb(91, 95, 99)      # 5B5F63
-LGRAY  = rgb(154, 154, 147)   # 9A9A93
+# ── Monochrome palette (live premai.io logo: black dot mark, verified 9 Jun 2026) ──
+INK    = rgb(10, 10, 10)      # near-black, logo color
+INK2   = rgb(23, 23, 27)      # dark surface
+GRAY   = rgb(91, 95, 99)      # body secondary
+MGRAY  = rgb(140, 140, 136)   # mid gray
+LGRAY  = rgb(176, 176, 170)   # light gray
+PAPER  = rgb(250, 250, 248)   # FAFAF8
+PAPER2 = rgb(236, 234, 225)   # ECEAE1 panel
 WHITE  = rgb(255, 255, 255)
-# Tints for ridgelines
-PERI_T  = rgb(225, 231, 255)
-CORAL_T = rgb(252, 230, 230)
-SAND_T  = rgb(250, 241, 222)
-PERI_T2 = rgb(206, 215, 252)
+# Ridge tints (grayscale)
+R1 = rgb(225, 224, 218)
+R2 = rgb(207, 206, 199)
+R3 = rgb(189, 188, 181)
 # Functional only (never brand)
 FN_RED   = rgb(186, 60, 60)
 FN_GREEN = rgb(46, 125, 80)
@@ -35,11 +32,9 @@ FONT = 'Pretendard'
 def lerp(c1, c2, t):
     return rgb(int(c1[0]+(c2[0]-c1[0])*t), int(c1[1]+(c2[1]-c1[1])*t), int(c1[2]+(c2[2]-c1[2])*t))
 
-def grad(t):
-    """Logo gradient: PERI at 0, CORAL at 0.506, SAND at 1."""
-    a, b, c = (127,150,255), (245,142,142), (242,211,152)
-    if t <= 0.506: return lerp(a, b, t/0.506)
-    return lerp(b, c, (t-0.506)/0.494)
+def ink_ramp(t):
+    """Halftone depth ramp for the dot map: ink to mid gray."""
+    return lerp((10, 10, 10), (130, 130, 125), t)
 
 # ── Geometry helpers ───────────────────────────────────────
 def add_bg(slide, fill):
@@ -61,7 +56,7 @@ def dot(slide, cx, cy, r, fill):
     return s
 
 def txt(slide, text, left, top, w, h, sz=11, bold=False, color=INK,
-        align=PP_ALIGN.LEFT, spacing=None):
+        align=PP_ALIGN.LEFT):
     tb = slide.shapes.add_textbox(Inches(left), Inches(top), Inches(w), Inches(h))
     tf = tb.text_frame; tf.word_wrap = True
     p = tf.paragraphs[0]; p.alignment = align
@@ -69,20 +64,21 @@ def txt(slide, text, left, top, w, h, sz=11, bold=False, color=INK,
     f = r.font; f.size = Pt(sz); f.bold = bold; f.color.rgb = color; f.name = FONT
     return tb
 
-def label(slide, text, left, top, w=8, color=GRAY):
-    """Small-caps style section label."""
+def label(slide, text, left, top, w=10, color=GRAY):
     return txt(slide, text.upper(), left, top, w, 0.3, sz=9, bold=True, color=color)
 
 def rule(slide, left, top, w, color=INK, weight=0.012):
     return box(slide, left, top, w, weight, fill=color)
 
-def dot_row(slide, left, top, n=5, r=0.045, gap=0.16):
-    for i in range(n):
-        dot(slide, left + i*gap, top, r, grad(i/(n-1)))
+def dot_row(slide, left, top, color=INK):
+    """Family signature: five ink dots of varied size, echoing the logo."""
+    radii = [0.052, 0.034, 0.046, 0.03, 0.04]
+    x = left
+    for r in radii:
+        dot(slide, x, top, r, color)
+        x += 0.17
 
 def ridge(slide, pts, fill):
-    """Filled mountain silhouette. pts: list of (x_in, y_in) for the ridgeline,
-    closed down to the bottom edge of the slide."""
     fb = slide.shapes.build_freeform(Emu(Inches(pts[0][0])), Emu(Inches(7.5)), scale=1.0)
     seq = [(Inches(x), Inches(y)) for x, y in pts] + [(Inches(pts[-1][0]), Inches(7.5))]
     fb.add_line_segments([(Emu(x), Emu(y)) for x, y in seq], close=True)
@@ -112,10 +108,10 @@ def in_poly(x, y, poly):
     return inside
 
 def swiss_dot_map(slide, left, top, width, spacing=0.115, r=0.036,
-                  color_fn=None, mark_lugano=True):
+                  color_fn=ink_ramp, mark_lugano=True):
     lons = [p[0] for p in CH_POLY]; lats = [p[1] for p in CH_POLY]
     lon0, lon1 = min(lons), max(lons); lat0, lat1 = min(lats), max(lats)
-    ew = (lon1 - lon0) * COS          # effective width in degrees
+    ew = (lon1 - lon0) * COS
     eh = lat1 - lat0
     scale = width / ew
     height = eh * scale
@@ -126,24 +122,23 @@ def swiss_dot_map(slide, left, top, width, spacing=0.115, r=0.036,
             lon = lon0 + (px / scale) / COS
             lat = lat1 - (py / scale)
             if in_poly(lon, lat, CH_POLY):
-                t = (px / width) * 0.75 + (py / height) * 0.25
-                c = color_fn(t) if color_fn else grad(t)
-                dot(slide, left + px, top + py, r, c)
+                t = (px / width) * 0.6 + (py / height) * 0.4
+                dot(slide, left + px, top + py, r, color_fn(t))
     if mark_lugano:
         lx = left + (8.95 - lon0) * COS * scale
         ly = top + (lat1 - 46.0) * scale
-        dot(slide, lx, ly, 0.055, INK)
-        txt(slide, 'Lugano HQ', lx + 0.12, ly - 0.12, 1.2, 0.25, sz=8, bold=True, color=INK)
+        d = dot(slide, lx, ly, 0.06, WHITE)
+        d.line.color.rgb = INK; d.line.width = Pt(1.5)
+        txt(slide, 'Lugano HQ', lx + 0.13, ly - 0.12, 1.2, 0.25, sz=8, bold=True, color=INK)
     return height
 
-# ── Build ──────────────────────────────────────────────────
 prs = Presentation()
 prs.slide_width = Inches(13.333)
 prs.slide_height = Inches(7.5)
 blank = prs.slide_layouts[6]
 def ns(): return prs.slides.add_slide(blank)
 
-def header(slide, section, page=None):
+def header(slide, section):
     label(slide, section, 0.55, 0.42)
     rule(slide, 0.55, 0.78, 12.23, color=INK)
 
@@ -155,21 +150,21 @@ def notes(slide, text):
 # S1  COVER
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-ridge(s, [(0,6.30),(1.6,5.62),(3.2,6.18),(4.8,5.35),(6.4,6.10),(8.0,5.50),(9.6,6.18),(11.2,5.72),(13.34,6.28)], PERI_T)
-ridge(s, [(0,6.72),(2.2,6.05),(4.4,6.62),(6.6,5.95),(8.8,6.52),(11.0,6.12),(13.34,6.62)], CORAL_T)
-ridge(s, [(0,7.05),(2.6,6.55),(5.2,6.98),(7.8,6.42),(10.4,6.92),(13.34,6.62)], SAND_T)
+ridge(s, [(0,6.30),(1.6,5.62),(3.2,6.18),(4.8,5.35),(6.4,6.10),(8.0,5.50),(9.6,6.18),(11.2,5.72),(13.34,6.28)], R1)
+ridge(s, [(0,6.72),(2.2,6.05),(4.4,6.62),(6.6,5.95),(8.8,6.52),(11.0,6.12),(13.34,6.62)], R2)
+ridge(s, [(0,7.05),(2.6,6.55),(5.2,6.98),(7.8,6.42),(10.4,6.92),(13.34,6.62)], R3)
 
 swiss_dot_map(s, 7.35, 1.05, 5.3)
 
 dot_row(s, 0.62, 1.18)
 txt(s, 'THE BRAND BIBLE', 0.55, 1.5, 6.6, 1.0, sz=44, bold=True, color=INK)
-txt(s, 'Prem + Fluso', 0.57, 2.55, 6.5, 0.6, sz=24, color=GRAY)
+txt(s, 'Prem and its products', 0.57, 2.55, 6.5, 0.6, sz=24, color=GRAY)
 rule(s, 0.57, 3.35, 3.2, color=INK)
-txt(s, 'Built in Lugano. Verified by design.', 0.57, 3.55, 6.2, 0.4, sz=12, color=GRAY)
-txt(s, 'Brand architecture  |  Voice  |  Color and type  |  The Swiss visual world  |  Platform playbooks',
-    0.57, 4.05, 6.4, 0.6, sz=9.5, color=LGRAY)
-txt(s, 'v2.0   June 2026   Internal use only', 0.57, 4.65, 6, 0.35, sz=9, color=LGRAY)
-notes(s, 'Logo gradient verified from logo.svg at static.premai.io (premAI-io/static.premai.io, fetched 9 Jun 2026): #7F96FF, #F58E8E, #F2D398. Lugano HQ address per public company information: Crocicchio Cortogna 6, 6900 Lugano.')
+txt(s, 'Private Super Intelligence, built in Lugano.', 0.57, 3.55, 6.2, 0.4, sz=12, color=GRAY)
+txt(s, 'Brand architecture  |  Digital focus  |  Voice  |  Monochrome system  |  The Swiss visual world  |  Platform playbooks',
+    0.57, 4.05, 6.6, 0.6, sz=9.5, color=LGRAY)
+txt(s, 'v3.0   June 2026   Internal use only', 0.57, 4.65, 6, 0.35, sz=9, color=LGRAY)
+notes(s, 'Logo verified from the live premai.io site (screenshot, 9 Jun 2026): monochrome black dot-cluster mark, "PREM" wordmark. The gradient logo.svg in static.premai.io is an older asset and is not the current identity. Site hero: "Private Super Intelligence" over dark alpine photography. Tagline on site: "AI is the most powerful technology of our era. Prem makes it private, verifiable, and sovereign."')
 
 
 # ══════════════════════════════════════════════════════════
@@ -178,18 +173,18 @@ notes(s, 'Logo gradient verified from logo.svg at static.premai.io (premAI-io/st
 s = ns(); add_bg(s, PAPER)
 header(s, 'Contents')
 sections = [
-    ('01','Brand architecture','One family, two identities'),
-    ('02','Positioning: Prem','Enterprise AI you can prove'),
-    ('03','Positioning: Fluso','Work deeper, not longer'),
-    ('04','The category','Verifiable AI'),
-    ('05','Voice and tone','Four principles, one banned list'),
-    ('06','Color','The verified logo palette'),
-    ('07','Typography','Pretendard, the brand typeface'),
-    ('08','The Swiss visual world','Mountains, the dot map, calm space'),
-    ('09','Visual application','Social templates in practice'),
-    ('10','Platform playbooks','LinkedIn, X, Instagram, Facebook'),
-    ('11','Content pillars','What each brand publishes'),
-    ('12','Audience architecture','Persona to platform'),
+    ('01','Brand architecture','Prem masterbrand and the product portfolio'),
+    ('02','Digital focus','Fluso 40%, Prem and the rest 60%'),
+    ('03','Positioning: Prem','Private Super Intelligence'),
+    ('04','Positioning: Fluso','Work deeper, not longer'),
+    ('05','The category','Verifiable AI'),
+    ('06','Voice and tone','Four principles, one banned list'),
+    ('07','Color','Monochrome, like the mark'),
+    ('08','Typography','Pretendard, the brand typeface'),
+    ('09','The Swiss visual world','Mountains, the dot map, calm space'),
+    ('10','Visual application','Social templates in practice'),
+    ('11','Platform playbooks','LinkedIn, X, Instagram, Facebook'),
+    ('12','Content and audience','Pillars and persona mapping'),
     ('13','Vocabulary and governance','Words we own, who signs off'),
 ]
 for i, (num, title, sub) in enumerate(sections):
@@ -199,84 +194,122 @@ for i, (num, title, sub) in enumerate(sections):
     y = 1.15 + row * 0.86
     txt(s, num, x, y, 0.55, 0.35, sz=11, bold=True, color=GRAY)
     txt(s, title, x+0.62, y, 5.0, 0.35, sz=13, bold=True, color=INK)
-    txt(s, sub, x+0.62, y+0.38, 5.2, 0.32, sz=9, color=LGRAY)
-dot_row(s, 12.35, 7.05)
+    txt(s, sub, x+0.62, y+0.38, 5.4, 0.32, sz=9, color=LGRAY)
+dot_row(s, 12.25, 7.05)
 
 
 # ══════════════════════════════════════════════════════════
-# S3  BRAND ARCHITECTURE
+# S3  BRAND ARCHITECTURE (portfolio)
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
 header(s, '01  Brand architecture')
-txt(s, 'One family. Two distinct identities.', 0.55, 1.0, 11, 0.7, sz=28, bold=True, color=INK)
+txt(s, 'One masterbrand. A portfolio of products.', 0.55, 0.95, 11.5, 0.6, sz=26, bold=True, color=INK)
 
-box(s, 0.55, 1.95, 5.85, 4.95, fill=WHITE)
-box(s, 0.55, 1.95, 5.85, 0.06, fill=PERI)
-txt(s, 'PREM', 0.85, 2.12, 3.5, 0.5, sz=22, bold=True, color=INK)
-txt(s, 'Masterbrand. The enterprise identity.', 0.85, 2.66, 5.2, 0.32, sz=9.5, color=GRAY)
-prem_rows = [
-    ('Audience','CISOs, CTOs, compliance officers, enterprise procurement'),
-    ('Tone','Authoritative, precise, institutional. Peer-to-peer CTO voice.'),
-    ('Channels','LinkedIn primary. Press, partner and investor materials.'),
-    ('Purpose','Build the category Verifiable AI. Win regulated enterprise.'),
-    ('Mark','Prem dot-cluster mark, gradient version, on light backgrounds.'),
+# Masterbrand band
+box(s, 0.55, 1.7, 12.23, 1.25, fill=INK2)
+txt(s, 'PREM', 0.9, 1.92, 2.5, 0.5, sz=22, bold=True, color=WHITE)
+txt(s, 'Private Super Intelligence. The enterprise identity: authoritative, precise, institutional. Carries the trust that every product borrows. LinkedIn, press, partners, investors.',
+    2.6, 1.95, 10.0, 0.85, sz=10.5, color=PAPER2)
+
+# Product cards
+cards = [
+    ('FLUSO', 'Flagship product',
+     'Private AI workspace with compounding memory, 50+ connectors and cross-silo workflows. The deep-work product for knowledge professionals. Own voice: direct, builder, honest.',
+     'Lockup: "Fluso by Prem". Dot mark used exactly as provided, never recolored.', True),
+    ('PREM STUDIO', 'Platform product',
+     'Build, fine-tune, evaluate and automate models. Marketed to developers and ML teams through docs, tutorials and engineering content under the Prem voice.',
+     'Always written as two words, both capitalised.', False),
+    ('RETICLE', 'Open source',
+     'The attestation and verification stack behind Verifiable AI. Community-facing: GitHub, contributor content, technical posts. Credibility engine for the whole portfolio.',
+     'Always capitalised. Never described as a feature.', False),
 ]
-for i, (l, v) in enumerate(prem_rows):
-    y = 3.15 + i * 0.72
-    txt(s, l.upper(), 0.85, y, 1.25, 0.3, sz=7.5, bold=True, color=GRAY)
-    txt(s, v, 2.15, y, 4.05, 0.62, sz=9.5, color=INK)
+for i, (name, kind, body, ruleline, flag) in enumerate(cards):
+    x = 0.55 + i * 4.27
+    box(s, x, 3.2, 3.95, 3.45, fill=WHITE)
+    box(s, x, 3.2, 3.95, 0.06, fill=INK)
+    txt(s, name, x+0.25, 3.38, 3.0, 0.4, sz=15, bold=True, color=INK)
+    txt(s, kind.upper(), x+0.25, 3.82, 3.4, 0.28, sz=7.5, bold=True, color=GRAY)
+    if flag:
+        box(s, x+2.5, 3.42, 1.25, 0.34, fill=INK)
+        txt(s, 'FLAGSHIP', x+2.5, 3.47, 1.25, 0.26, sz=7.5, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
+    txt(s, body, x+0.25, 4.18, 3.45, 1.7, sz=9.5, color=GRAY)
+    rule(s, x+0.25, 6.0, 3.45, color=PAPER2, weight=0.02)
+    txt(s, ruleline, x+0.25, 6.1, 3.45, 0.5, sz=8.5, color=LGRAY)
 
-box(s, 6.95, 1.95, 5.85, 4.95, fill=WHITE)
-box(s, 6.95, 1.95, 5.85, 0.06, fill=CORAL)
-txt(s, 'FLUSO', 7.25, 2.12, 3.5, 0.5, sz=22, bold=True, color=INK)
-txt(s, 'Product sub-brand. The user-facing identity.', 7.25, 2.66, 5.2, 0.32, sz=9.5, color=GRAY)
-fluso_rows = [
-    ('Audience','Lawyers, analysts, researchers, developers, prosumers'),
-    ('Tone','Direct, builder voice, grounded, honest about limitations'),
-    ('Channels','X primary. Instagram, product blog, community.'),
-    ('Purpose','Be the product builders recommend to each other.'),
-    ('Mark','Fluso dot mark, used exactly as provided. Never recolored.'),
-]
-for i, (l, v) in enumerate(fluso_rows):
-    y = 3.15 + i * 0.72
-    txt(s, l.upper(), 7.25, y, 1.25, 0.3, sz=7.5, bold=True, color=GRAY)
-    txt(s, v, 8.55, y, 4.05, 0.62, sz=9.5, color=INK)
-
-txt(s, 'The lockup is "Fluso by Prem", never "Prem\'s product". The sub-brand keeps its own personality while borrowing the masterbrand\'s enterprise trust.',
-    0.55, 7.02, 12.3, 0.4, sz=9.5, color=GRAY)
+txt(s, 'The portfolio is marketed as one family. Fluso leads, the platform earns, Reticle proves. No product gets the whole stage.',
+    0.55, 6.95, 12.2, 0.4, sz=10, color=GRAY)
+notes(s, 'Product facts sourced: Fluso description (private AI workspace, compounding memory, 50+ connectors, cross-silo workflows) from public premai.io product info via search. Prem Studio from premAI-io/prem-studio-tutorials repo description. Reticle from prior verified research on the attestation stack.')
 
 
 # ══════════════════════════════════════════════════════════
-# S4  POSITIONING: PREM
+# S4  DIGITAL FOCUS SPLIT
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-header(s, '02  Positioning: Prem')
-txt(s, '"Enterprise AI you can prove."', 0.55, 1.0, 12, 0.8, sz=32, bold=True, color=INK)
-txt(s, 'The only AI platform that ships cryptographic attestation with every inference. A proof, not a policy.',
-    0.55, 1.85, 11.5, 0.4, sz=12, color=GRAY)
+header(s, '02  Digital focus  |  How attention is allocated')
+txt(s, 'Fluso is the flagship, not the whole stage.', 0.55, 0.95, 12, 0.6, sz=26, bold=True, color=INK)
+
+# Split bar
+bar_y = 1.95
+box(s, 0.55, bar_y, 12.23 * 0.4, 1.0, fill=INK)
+box(s, 0.55 + 12.23 * 0.4, bar_y, 12.23 * 0.6, 1.0, fill=PAPER2)
+txt(s, '40%  FLUSO', 0.85, bar_y + 0.28, 4.0, 0.45, sz=18, bold=True, color=WHITE)
+txt(s, '60%  PREM, PREM STUDIO, RETICLE, RESEARCH', 0.55 + 12.23*0.4 + 0.3, bar_y + 0.28, 7.0, 0.45, sz=18, bold=True, color=INK)
+
+cols = [
+    ('What the 40% buys Fluso',
+     'Full launch support, daily X presence, Instagram as its visual home, influencer program, signup-driving campaigns. Flagship treatment on every drop.'),
+    ('What the 60% covers',
+     'Prem enterprise authority on LinkedIn, Prem Studio developer content and tutorials, Reticle open-source and community work, research and industry presence.'),
+    ('The discipline',
+     'Measure the split monthly across published posts, paid spend and campaign hours. If Fluso drifts past half of total output, rebalance the calendar.'),
+]
+for i, (t, b) in enumerate(cols):
+    x = 0.55 + i * 4.27
+    box(s, x, 3.45, 3.95, 3.0, fill=WHITE)
+    box(s, x, 3.45, 3.95, 0.06, fill=INK)
+    txt(s, t, x+0.25, 3.62, 3.45, 0.65, sz=12.5, bold=True, color=INK)
+    txt(s, b, x+0.25, 4.35, 3.45, 2.0, sz=10, color=GRAY)
+
+txt(s, 'The split is about output share, not importance. Fluso gets 100% commitment inside its 40%.',
+    0.55, 6.75, 12.2, 0.4, sz=10, color=GRAY)
+
+
+# ══════════════════════════════════════════════════════════
+# S5  POSITIONING: PREM
+# ══════════════════════════════════════════════════════════
+s = ns(); add_bg(s, PAPER)
+header(s, '03  Positioning: Prem')
+txt(s, 'Private Super Intelligence', 0.55, 1.0, 12, 0.8, sz=34, bold=True, color=INK)
+txt(s, '"AI is the most powerful technology of our era. Prem makes it private, verifiable, and sovereign."  (premai.io hero)',
+    0.55, 1.85, 11.8, 0.4, sz=11.5, color=GRAY)
 
 pillars = [
-    ('Proof per inference',
-     'Reticle produces a hardware-signed cryptographic attestation at the TEE layer on every inference. Verifiable by any party. No competitor ships this.', PERI),
-    ('Model portability',
-     'Any open-source model on your own infrastructure. Switch models without migration cost. No lock-in, no forced upgrade path.', CORAL),
-    ('Sovereign deployment',
-     'Data never leaves the customer VPC. The customer\'s jurisdiction governs. Auditable by their team, their counsel, their regulator.', SAND),
+    ('Private',
+     'Runs on the customer\'s infrastructure. Data never leaves their VPC. No provider-side retention, no training on customer data.'),
+    ('Verifiable',
+     'Reticle produces a hardware-signed cryptographic attestation at the TEE layer on every inference. Checkable by any party. No competitor ships this.'),
+    ('Sovereign',
+     'The customer\'s jurisdiction governs. Any open model, portable across infrastructure, auditable by their team, their counsel, their regulator.'),
 ]
-for i, (t, b, accent) in enumerate(pillars):
+for i, (t, b) in enumerate(pillars):
     x = 0.55 + i * 4.27
-    box(s, x, 2.55, 3.95, 4.35, fill=WHITE)
-    box(s, x, 2.55, 3.95, 0.06, fill=accent)
-    dot(s, x+0.42, 3.05, 0.09, accent)
-    txt(s, t, x+0.28, 3.35, 3.4, 0.65, sz=16, bold=True, color=INK)
-    txt(s, b, x+0.28, 4.15, 3.4, 2.6, sz=10.5, color=GRAY)
+    box(s, x, 2.55, 3.95, 3.6, fill=WHITE)
+    box(s, x, 2.55, 3.95, 0.06, fill=INK)
+    dot(s, x+0.42, 3.05, 0.09, INK)
+    txt(s, t, x+0.28, 3.32, 3.4, 0.6, sz=17, bold=True, color=INK)
+    txt(s, b, x+0.28, 4.0, 3.4, 2.0, sz=10.5, color=GRAY)
+
+box(s, 0.55, 6.4, 12.23, 0.75, fill=WHITE)
+txt(s, 'PROOF BANK   The premai.io homepage shows "Trusted by" logos including Microsoft, NVIDIA, AWS, Index Ventures, Innosuisse, SUPSI, Abu Dhabi Investment Office and Plug and Play. Use them as social proof exactly as the site presents them, nothing more.',
+    0.85, 6.58, 11.7, 0.5, sz=9, color=INK)
+notes(s, 'Hero copy and trusted-by logos read directly from the live premai.io homepage screenshot, 9 Jun 2026. Positioning language uses the company\'s own words: private, verifiable, sovereign.')
 
 
 # ══════════════════════════════════════════════════════════
-# S5  POSITIONING: FLUSO
+# S6  POSITIONING: FLUSO
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-header(s, '03  Positioning: Fluso')
+header(s, '04  Positioning: Fluso')
 txt(s, '"Work deeper, not longer."', 0.55, 1.0, 12, 0.8, sz=32, bold=True, color=INK)
 txt(s, 'Deep-work AI for knowledge professionals who think in 20-minute sessions, not prompt chains.',
     0.55, 1.85, 11.5, 0.4, sz=12, color=GRAY)
@@ -285,23 +318,23 @@ details = [
     ('FOR','Lawyers, analysts, researchers and engineers doing cognitive-heavy work'),
     ('WHO NEED','AI that fits into deep-work sessions without breaking concentration or creating new overhead'),
     ('UNLIKE','Chat-first tools optimised for quick answers rather than sustained reasoning sessions'),
-    ('FLUSO IS','A private AI workspace with compounding memory, built for 10 to 30 minute focused workflows, with session audit trail and honest accuracy reporting'),
+    ('FLUSO IS','A private AI workspace with compounding memory and 50+ connectors, built for 10 to 30 minute focused workflows, with session audit trail and honest accuracy reporting'),
     ('THE PROOF','59 minutes per day lost to information search. 60% of knowledge-worker time spent on work about work. Fluso attacks both numbers.'),
 ]
 for i, (l, b) in enumerate(details):
     y = 2.75 + i * 0.86
     txt(s, l, 0.55, y, 1.6, 0.5, sz=9, bold=True, color=GRAY)
     txt(s, b, 2.3, y, 10.4, 0.75, sz=11.5, color=INK)
-dot_row(s, 12.35, 7.1)
+dot_row(s, 12.25, 7.1)
 
 
 # ══════════════════════════════════════════════════════════
-# S6  THE CATEGORY
+# S7  THE CATEGORY
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-header(s, '04  The category we are creating')
+header(s, '05  The category we are creating')
 txt(s, 'Verifiable AI', 0.55, 1.0, 10, 0.85, sz=40, bold=True, color=INK)
-txt(s, 'Not "Private AI". Not "Secure AI". A new category that Prem names and owns.',
+txt(s, 'The word is already in the company\'s own hero copy. The category claim makes it ours.',
     0.55, 1.9, 11.5, 0.4, sz=12, color=GRAY)
 cats = [
     ('Policy-based "Private AI"',
@@ -313,19 +346,19 @@ cats = [
 ]
 for i, (t, b, hi) in enumerate(cats):
     x = 0.55 + i * 4.27
-    box(s, x, 2.55, 3.95, 4.35, fill=WHITE if not hi else INK)
-    box(s, x, 2.55, 3.95, 0.06, fill=LGRAY if not hi else PERI)
+    box(s, x, 2.55, 3.95, 4.35, fill=WHITE if not hi else INK2)
+    box(s, x, 2.55, 3.95, 0.06, fill=LGRAY if not hi else INK)
     txt(s, t, x+0.28, 2.72, 3.4, 0.65, sz=13, bold=True, color=GRAY if not hi else WHITE)
     txt(s, b, x+0.28, 3.45, 3.4, 3.1, sz=10, color=GRAY if not hi else PAPER2)
     if hi:
-        txt(s, 'PREM OWNS THIS COLUMN', x+0.28, 6.5, 3.4, 0.3, sz=8, bold=True, color=PERI)
+        txt(s, 'PREM OWNS THIS COLUMN', x+0.28, 6.5, 3.4, 0.3, sz=8, bold=True, color=LGRAY)
 
 
 # ══════════════════════════════════════════════════════════
-# S7  VOICE: FOUR PRINCIPLES
+# S8  VOICE: FOUR PRINCIPLES
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-header(s, '05  Voice and tone  |  Four principles, both brands')
+header(s, '06  Voice and tone  |  Four principles, every brand surface')
 principles = [
     ('Precise over poetic',
      'Name the exact thing. Use numbers when you have them. "Reduces audit prep from 3 weeks to 4 days" beats "dramatically accelerates compliance."'),
@@ -340,19 +373,19 @@ for i, (t, b) in enumerate(principles):
     x = 0.55 + (i % 2) * 6.4
     y = 1.15 + (i // 2) * 2.95
     box(s, x, y, 5.85, 2.7, fill=WHITE)
-    box(s, x, y, 0.06, 2.7, fill=grad(i/3))
+    box(s, x, y, 0.06, 2.7, fill=INK)
     txt(s, str(i+1), x+0.3, y+0.22, 0.6, 0.5, sz=22, bold=True, color=LGRAY)
     txt(s, t, x+0.3, y+0.8, 5.2, 0.5, sz=17, bold=True, color=INK)
     txt(s, b, x+0.3, y+1.35, 5.25, 1.25, sz=10.5, color=GRAY)
 
 
 # ══════════════════════════════════════════════════════════
-# S8  BANNED LIST
+# S9  BANNED LIST
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-header(s, '05  Voice and tone  |  The banned list')
+header(s, '06  Voice and tone  |  The banned list')
 txt(s, 'Prohibited across all Prem and Fluso content. No exceptions.', 0.55, 0.95, 12, 0.35, sz=11, color=GRAY)
-cols = [
+bcols = [
     ('BANNED WORDS', [
         'Revolutionary, game-changing, effortless',
         'Unlock your potential, empower your team',
@@ -378,7 +411,7 @@ cols = [
         'Statements about our own website or product UI no one has checked',
     ]),
 ]
-for i, (t, items) in enumerate(cols):
+for i, (t, items) in enumerate(bcols):
     x = 0.55 + i * 4.27
     box(s, x, 1.4, 3.95, 5.7, fill=WHITE)
     box(s, x, 1.4, 3.95, 0.06, fill=FN_RED)
@@ -390,10 +423,10 @@ for i, (t, items) in enumerate(cols):
 
 
 # ══════════════════════════════════════════════════════════
-# S9  VOICE IN ACTION
+# S10  VOICE IN ACTION
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-header(s, '05  Voice and tone  |  In practice')
+header(s, '06  Voice and tone  |  In practice')
 examples = [
     ('LINKEDIN PRODUCT INTRO',
      'Introducing Prem, the revolutionary AI platform that empowers your team to unlock new levels of productivity while keeping data safe.',
@@ -417,21 +450,21 @@ for i, (ctx, bad, good) in enumerate(examples):
 
 
 # ══════════════════════════════════════════════════════════
-# S10  COLOR
+# S11  COLOR (monochrome)
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-header(s, '06  Color  |  The verified logo palette')
-txt(s, 'Every brand color comes from one place: the Prem logo gradient.',
+header(s, '07  Color  |  Monochrome, like the mark')
+txt(s, 'The Prem logo is black dots on white. The brand follows the logo.',
     0.55, 0.95, 12, 0.4, sz=13, bold=True, color=INK)
-txt(s, 'Source: logo.svg, static.premai.io. Three gradient stops, verified 9 June 2026.',
+txt(s, 'Verified from the live premai.io site. Photography carries the atmosphere; the identity itself stays monochrome.',
     0.55, 1.4, 12, 0.32, sz=9.5, color=GRAY)
 
 swatches = [
-    ('Periwinkle', '#7F96FF', PERI,  'Gradient stop 0.\nPrem primary accent.'),
-    ('Coral',      '#F58E8E', CORAL, 'Gradient stop 0.5.\nFluso primary accent.'),
-    ('Sand',       '#F2D398', SAND,  'Gradient stop 1.\nWarm highlight, sparingly.'),
-    ('Ink',        '#17171B', INK,   'All text.\nDark surfaces.'),
-    ('Paper',      '#FAF9F5', PAPER, 'Default background.\nThe Swiss white space.'),
+    ('Ink',       '#0A0A0A', INK,   'The logo color.\nAll marks, all headlines.'),
+    ('Dark',      '#17171B', INK2,  'Dark surfaces,\nquote cards, hero blocks.'),
+    ('Gray',      '#5B5F63', GRAY,  'Secondary text,\nlabels, captions.'),
+    ('Light gray','#B0B0AA', LGRAY, 'Rules, footnotes,\nhalftone shading.'),
+    ('Paper',     '#FAFAF8', PAPER, 'Default ground.\nThe Swiss white space.'),
 ]
 for i, (n, hx, c, u) in enumerate(swatches):
     x = 0.55 + i * 2.52
@@ -442,20 +475,20 @@ for i, (n, hx, c, u) in enumerate(swatches):
     txt(s, u, x, 5.08, 2.28, 0.85, sz=8.5, color=GRAY)
 
 box(s, 0.55, 6.1, 12.23, 1.0, fill=WHITE)
-box(s, 0.55, 6.1, 0.06, 1.0, fill=CORAL)
-txt(s, 'FLUSO NOTE', 0.85, 6.22, 2.0, 0.3, sz=8, bold=True, color=CORAL)
-txt(s, 'Fluso never uses orange. Its accent colors must be lifted from the Fluso logo file exactly as provided. Until those hex values are pulled from the asset, use coral #F58E8E from the family gradient. Do not approximate, tint, or recolor the dot mark.',
+box(s, 0.55, 6.1, 0.06, 1.0, fill=INK)
+txt(s, 'TWO RULES', 0.85, 6.22, 2.0, 0.3, sz=8, bold=True, color=GRAY)
+txt(s, '1. Color in the feed comes from photography (the Alps, real product screens), never from the identity itself.   2. Fluso accent colors, if any, are lifted from the Fluso logo file exactly as provided. Nothing is approximated, tinted, or recolored. Until that file is checked, Fluso is monochrome too.',
     0.85, 6.5, 11.7, 0.55, sz=9.5, color=INK)
-notes(s, 'Gradient stops read directly from logo.svg in premAI-io/static.premai.io: stop 0 #7F96FF, stop 0.505785 #F58E8E, stop 1 #F2D398. Neutrals Paper #FAF9F5 and Ink #17171B taken from the existing PremAI deck system. Fluso exact logo hexes were not available to verify; flagged on slide rather than guessed.')
+notes(s, 'Current logo verified monochrome from the live premai.io screenshot (9 Jun 2026). The gradient logo.svg (#7F96FF, #F58E8E, #F2D398) found in premAI-io/static.premai.io is an older asset; do not use it unless design confirms it is still active. Neutrals: Paper #FAFAF8 and near-black from the existing PremAI deck system.')
 
 
 # ══════════════════════════════════════════════════════════
-# S11  TYPOGRAPHY
+# S12  TYPOGRAPHY
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-header(s, '07  Typography  |  Pretendard')
+header(s, '08  Typography  |  Pretendard')
 txt(s, 'Pretendard', 0.55, 1.0, 8, 0.9, sz=44, bold=True, color=INK)
-txt(s, 'The verified brand typeface. Prem already self-hosts Pretendard Regular, SemiBold and Bold at static.premai.io/fonts. One family, both brands, every surface.',
+txt(s, 'The verified brand typeface. Prem self-hosts Pretendard Regular, SemiBold and Bold at static.premai.io/fonts, and the live site is set in a matching grotesque. One family, every brand surface.',
     0.55, 2.0, 7.0, 0.75, sz=11.5, color=GRAY)
 
 type_rows = [
@@ -463,7 +496,7 @@ type_rows = [
     ('Section head', 'Pretendard SemiBold, 20 to 28pt'),
     ('Body copy',    'Pretendard Regular, 10 to 12pt, leading 1.6x'),
     ('Labels',       'Pretendard SemiBold, 8 to 9pt, all caps, letterspaced'),
-    ('Data callout', 'Pretendard Bold at display scale, accent color'),
+    ('Data callout', 'Pretendard Bold at display scale, ink on paper'),
 ]
 for i, (st, sp) in enumerate(type_rows):
     y = 3.0 + i * 0.62
@@ -480,56 +513,55 @@ txt(s, 'Files: Pretendard-Regular.woff2, Pretendard-SemiBold.woff2, Pretendard-B
 box(s, 0.55, 6.3, 12.23, 0.8, fill=WHITE)
 txt(s, 'RULES   Bold for emphasis, never italics.  Minimum 10pt digital.  Max 70 characters per line.  Sentence case in product and social.  Mono (JetBrains Mono) only for code.',
     0.85, 6.5, 11.7, 0.45, sz=9.5, color=INK)
-notes(s, 'Pretendard verified as the brand typeface: the fonts directory of premAI-io/static.premai.io contains Pretendard-Regular.woff2, Pretendard-SemiBold.woff2, Pretendard-Bold.woff2 (checked 9 Jun 2026). If the logo wordmark itself uses a different custom face, confirm against the master logo file; everything else runs on Pretendard.')
+notes(s, 'Pretendard files verified in premAI-io/static.premai.io/fonts (9 Jun 2026). If the wordmark itself is a different custom face, confirm against the master logo file; everything else runs on Pretendard.')
 
 
 # ══════════════════════════════════════════════════════════
-# S12  THE SWISS VISUAL WORLD
+# S13  THE SWISS VISUAL WORLD
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-header(s, '08  The Swiss visual world')
-txt(s, 'Prem is built in Lugano. The visuals say so without saying so.',
+header(s, '09  The Swiss visual world')
+txt(s, 'The website already lives in the Alps. Social extends it.',
     0.55, 0.95, 12.2, 0.6, sz=22, bold=True, color=INK)
 
 motifs = [
-    ('Alpine ridgelines',
-     'Layered mountain silhouettes in gradient tints. Used as footers, section breaks and Reel cover frames. Always calm, never dramatic stock peaks.'),
+    ('Alpine photography',
+     'The premai.io hero sets the standard: dark, monumental peaks, mist, muted light. Social photography matches that exact mood. No saturated stock, no postcard blue skies.'),
     ('The dot map',
-     'Switzerland drawn in the logo\'s own dot language, gradient applied. Our most ownable asset: the country and the mark in one image.'),
-    ('Lake horizon',
-     'Generous negative space above a single low horizon line. White space is the loudest part of the layout.'),
+     'Switzerland drawn in the logo\'s own black-dot language. Our most ownable graphic: the country and the mark in one image.'),
+    ('Ridgelines',
+     'Grayscale mountain silhouettes as footers, section breaks and Reel cover frames. Quiet geometry, never decoration.'),
     ('Swiss grid',
-     'The International Typographic Style is literally Swiss: strict grid, flush-left type, no decoration. We inherit it by birthright.'),
+     'The International Typographic Style is literally Swiss: strict grid, flush-left type, white space doing the work. We inherit it by birthright.'),
 ]
 for i, (t, b) in enumerate(motifs):
     x = 0.55 + (i % 2) * 6.4
     y = 1.8 + (i // 2) * 1.95
     box(s, x, y, 5.85, 1.75, fill=WHITE)
-    box(s, x, y, 0.06, 1.75, fill=grad(i/3))
+    box(s, x, y, 0.06, 1.75, fill=INK)
     txt(s, t, x+0.28, y+0.16, 5.3, 0.4, sz=13, bold=True, color=INK)
     txt(s, b, x+0.28, y+0.6, 5.3, 1.05, sz=9.5, color=GRAY)
 
-box(s, 0.55, 5.8, 12.23, 1.3, fill=INK)
-txt(s, 'RULES', 0.85, 5.95, 2.0, 0.3, sz=8, bold=True, color=PERI)
-txt(s, 'Photography: real Alps, muted morning light, no saturated stock.  Never use the Swiss flag or cross: protected mark, and a cliche.  Motifs support the message, they never carry it.  Every asset passes the calm test: if it shouts, it ships nowhere.',
+box(s, 0.55, 5.8, 12.23, 1.3, fill=INK2)
+txt(s, 'RULES', 0.85, 5.95, 2.0, 0.3, sz=8, bold=True, color=LGRAY)
+txt(s, 'Never use the Swiss flag or cross: protected mark, and a cliche.  One motif per asset; they support the message, never carry it.  Color enters only through photography and product screens.  Every asset passes the calm test: if it shouts, it ships nowhere.',
     0.85, 6.25, 11.7, 0.75, sz=10, color=PAPER)
 
 
 # ══════════════════════════════════════════════════════════
-# S13  VISUAL APPLICATION (mock templates)
+# S14  VISUAL APPLICATION
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-header(s, '09  Visual application  |  Social templates')
+header(s, '10  Visual application  |  Social templates')
 
 # (a) Reel cover 9:16
 rx, ry, rw, rh = 0.85, 1.3, 2.6, 4.62
 box(s, rx, ry, rw, rh, fill=PAPER, line=PAPER2, lw=1.2)
-ridge(s, [(rx, ry+rh-1.1),(rx+0.7, ry+rh-1.7),(rx+1.4, ry+rh-1.2),(rx+2.0, ry+rh-1.8),(rx+rw, ry+rh-1.25)], PERI_T)
-# clip ridge visually by overlaying paper below card
+ridge(s, [(rx, ry+rh-1.1),(rx+0.7, ry+rh-1.7),(rx+1.4, ry+rh-1.2),(rx+2.0, ry+rh-1.8),(rx+rw, ry+rh-1.25)], R2)
 box(s, rx-0.02, ry+rh, rw+0.04, 7.5-(ry+rh), fill=PAPER)
 txt(s, '23 MIN', rx+0.2, ry+0.5, 2.2, 0.6, sz=28, bold=True, color=INK)
 txt(s, 'contract review,\nevery clause sourced', rx+0.2, ry+1.15, 2.2, 0.7, sz=10, color=GRAY)
-dot_row(s, rx+0.32, ry+rh-0.32, n=3, r=0.035, gap=0.13)
+dot_row(s, rx+0.32, ry+rh-0.32)
 txt(s, 'REEL COVER  9:16', rx, ry+rh+0.12, rw, 0.3, sz=8, bold=True, color=GRAY)
 txt(s, 'Big number, one claim,\nridge footer, dot row', rx, ry+rh+0.42, rw, 0.5, sz=8.5, color=LGRAY)
 
@@ -539,49 +571,49 @@ box(s, cx, cy, cw, cw, fill=WHITE, line=PAPER2, lw=1.2)
 txt(s, 'The 20-minute\nagent test', cx+0.25, cy+0.3, 3.1, 1.0, sz=18, bold=True, color=INK)
 txt(s, 'One task. One timer.\nReceipts inside.', cx+0.25, cy+1.45, 3.1, 0.6, sz=10, color=GRAY)
 swiss_dot_map(s, cx+1.55, cy+2.1, 1.8, spacing=0.085, r=0.022,
-              color_fn=lambda t: lerp((242,211,152),(245,142,142),t), mark_lugano=False)
+              color_fn=lambda t: lerp((176,176,170),(120,120,115),t), mark_lugano=False)
 txt(s, 'CAROUSEL  1:1', cx, cy+cw+0.12, cw, 0.3, sz=8, bold=True, color=GRAY)
 txt(s, 'Standalone claim on slide 1, dot-map watermark, summary close (never a CTA slide)',
     cx, cy+cw+0.42, cw, 0.55, sz=8.5, color=LGRAY)
 
-# (c) Quote / data card 16:9
+# (c) Quote card 16:9
 qx, qy, qw, qh = 9.0, 1.3, 3.8, 2.14
-box(s, qx, qy, qw, qh, fill=INK)
+box(s, qx, qy, qw, qh, fill=INK2)
 txt(s, '"Our CISO asked how.\nI sent the Reticle docs."', qx+0.25, qy+0.3, 3.3, 0.85, sz=12, bold=True, color=WHITE)
 txt(s, 'Fluso session audit trail', qx+0.25, qy+1.45, 3.3, 0.3, sz=8.5, color=LGRAY)
-dot_row(s, qx+0.37, qy+qh-0.28, n=5, r=0.035, gap=0.13)
+dot_row(s, qx+0.37, qy+qh-0.28, color=WHITE)
 txt(s, 'QUOTE CARD  16:9', qx, qy+qh+0.12, qw, 0.3, sz=8, bold=True, color=GRAY)
-txt(s, 'Ink ground, white type, gradient dot row as signature', qx, qy+qh+0.42, qw, 0.5, sz=8.5, color=LGRAY)
+txt(s, 'Dark ground, white type, dot row as signature', qx, qy+qh+0.42, qw, 0.5, sz=8.5, color=LGRAY)
 
 box(s, 9.0, 4.6, 3.8, 2.3, fill=WHITE)
 txt(s, 'SYSTEM RULES', 9.25, 4.75, 3.3, 0.3, sz=8, bold=True, color=GRAY)
-txt(s, 'Paper or Ink grounds only. One motif per asset. Type does the talking. The dot row is the family signature across every template.',
+txt(s, 'Paper or dark grounds only. One motif per asset. Type does the talking. The varied-size dot row is the family signature on every template, straight from the logo.',
     9.25, 5.05, 3.35, 1.7, sz=9.5, color=INK)
 
 
 # ══════════════════════════════════════════════════════════
-# S14  LINKEDIN
+# S15  LINKEDIN
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-header(s, '10  Platform playbooks  |  LinkedIn  (Prem primary)')
+header(s, '11  Platform playbooks  |  LinkedIn  (Prem-led, 60% side)')
 
 box(s, 0.55, 1.05, 4.1, 6.05, fill=WHITE)
-box(s, 0.55, 1.05, 4.1, 0.06, fill=PERI)
+box(s, 0.55, 1.05, 4.1, 0.06, fill=INK)
 txt(s, 'STRATEGY', 0.8, 1.18, 3.6, 0.3, sz=8.5, bold=True, color=GRAY)
 li_strategy = [
     ('Audience','CISOs, CTOs, compliance officers, legal ops, investors'),
     ('Goal','Become the default answer to "which enterprise AI survives a regulator\'s questions?"'),
+    ('Mix','Prem authority, Prem Studio engineering content and Reticle open-source carry this channel. Fluso appears as proof, not as the program.'),
     ('Cadence','3 to 4 posts per week, maximum. Quality over volume.'),
     ('KPI','Branded search growth, qualified inbound, SQL mentions. Never followers or likes.'),
-    ('Engagement','Reply within 2 hours on publish day. Founder and team comments outperform page posts.'),
 ]
 for i, (l, v) in enumerate(li_strategy):
     y = 1.6 + i * 1.08
-    txt(s, l.upper(), 0.8, y, 3.5, 0.28, sz=7.5, bold=True, color=PERI)
+    txt(s, l.upper(), 0.8, y, 3.5, 0.28, sz=7.5, bold=True, color=GRAY)
     txt(s, v, 0.8, y+0.28, 3.6, 0.78, sz=9, color=INK)
 
 box(s, 4.85, 1.05, 7.93, 6.05, fill=WHITE)
-box(s, 4.85, 1.05, 7.93, 0.06, fill=PERI)
+box(s, 4.85, 1.05, 7.93, 0.06, fill=INK)
 txt(s, 'FIVE POST ARCHETYPES  (rotate, never repeat two in a row)', 5.1, 1.18, 7.4, 0.3, sz=8.5, bold=True, color=GRAY)
 li_arch = [
     ('1  Regulation, decoded',
@@ -604,17 +636,17 @@ for i, (t, st, hook) in enumerate(li_arch):
     y = 1.6 + i * 1.08
     txt(s, t, 5.1, y, 2.6, 0.95, sz=10, bold=True, color=INK)
     txt(s, st, 7.55, y, 3.0, 1.0, sz=8, color=GRAY)
-    txt(s, hook, 10.5, y, 2.1, 1.0, sz=8, color=PERI)
+    txt(s, hook, 10.5, y, 2.1, 1.0, sz=8, color=MGRAY)
 
 
 # ══════════════════════════════════════════════════════════
-# S15  X
+# S16  X
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-header(s, '10  Platform playbooks  |  X  (Fluso primary)')
+header(s, '11  Platform playbooks  |  X  (Fluso-led, inside the 40%)')
 
 box(s, 0.55, 1.05, 4.1, 6.05, fill=WHITE)
-box(s, 0.55, 1.05, 4.1, 0.06, fill=CORAL)
+box(s, 0.55, 1.05, 4.1, 0.06, fill=INK)
 txt(s, 'STRATEGY', 0.8, 1.18, 3.6, 0.3, sz=8.5, bold=True, color=GRAY)
 x_strategy = [
     ('Audience','Builders, developers, AI researchers, power users already debating open models and privacy'),
@@ -625,11 +657,11 @@ x_strategy = [
 ]
 for i, (l, v) in enumerate(x_strategy):
     y = 1.6 + i * 1.08
-    txt(s, l.upper(), 0.8, y, 3.5, 0.28, sz=7.5, bold=True, color=CORAL)
+    txt(s, l.upper(), 0.8, y, 3.5, 0.28, sz=7.5, bold=True, color=GRAY)
     txt(s, v, 0.8, y+0.28, 3.6, 0.78, sz=9, color=INK)
 
 box(s, 4.85, 1.05, 7.93, 6.05, fill=WHITE)
-box(s, 4.85, 1.05, 7.93, 0.06, fill=CORAL)
+box(s, 4.85, 1.05, 7.93, 0.06, fill=INK)
 txt(s, 'FIVE POST ARCHETYPES', 5.1, 1.18, 7.4, 0.3, sz=8.5, bold=True, color=GRAY)
 x_arch = [
     ('1  Build log',
@@ -652,24 +684,24 @@ for i, (t, st, hook) in enumerate(x_arch):
     y = 1.6 + i * 1.08
     txt(s, t, 5.1, y, 2.6, 0.95, sz=10, bold=True, color=INK)
     txt(s, st, 7.55, y, 3.0, 1.0, sz=8, color=GRAY)
-    txt(s, hook, 10.5, y, 2.1, 1.0, sz=8, color=rgb(200, 95, 95))
+    txt(s, hook, 10.5, y, 2.1, 1.0, sz=8, color=MGRAY)
 
 
 # ══════════════════════════════════════════════════════════
-# S16  INSTAGRAM
+# S17  INSTAGRAM
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-header(s, '10  Platform playbooks  |  Instagram  (Fluso)')
+header(s, '11  Platform playbooks  |  Instagram  (Fluso-weighted)')
 txt(s, 'Show the work. The Swiss visual world lives here.', 0.55, 0.95, 12, 0.5, sz=18, bold=True, color=INK)
 
 box(s, 0.55, 1.65, 6.0, 5.45, fill=WHITE)
-box(s, 0.55, 1.65, 6.0, 0.06, fill=SAND)
+box(s, 0.55, 1.65, 6.0, 0.06, fill=INK)
 txt(s, 'CONTENT FORMATS', 0.8, 1.78, 5.5, 0.3, sz=8.5, bold=True, color=GRAY)
 ig_fmt = [
-    ('Reels, 15 to 30s','Screen capture of a real task plus text overlay. No talking heads, no voiceover. Cover frame: big number, ridge footer (template, slide 09).'),
+    ('Reels, 15 to 30s','Screen capture of a real task plus text overlay. No talking heads, no voiceover. Cover frame: big number, ridge footer (template, slide 10).'),
     ('Carousels','Slide 1 carries a standalone claim. Dot-map watermark bottom-right. Close on a summary slide, never a CTA slide.'),
     ('Stories','Behind-the-work only: real screenshots, drafts, whiteboards. No branded templates. Polls only when we genuinely want the answer.'),
-    ('Grid rhythm','Alternate Paper-ground and Ink-ground cards so the grid reads as a pattern. Every 9th post: the dot map or a ridge, full bleed.'),
+    ('Grid rhythm','Alternate paper-ground and dark-ground cards plus alpine photography frames. Every 9th post: the dot map or a ridge, full bleed.'),
 ]
 for i, (t, b) in enumerate(ig_fmt):
     y = 2.2 + i * 1.22
@@ -677,7 +709,7 @@ for i, (t, b) in enumerate(ig_fmt):
     txt(s, b, 0.8, y+0.32, 5.45, 0.85, sz=8.5, color=GRAY)
 
 box(s, 6.8, 1.65, 6.0, 5.45, fill=WHITE)
-box(s, 6.8, 1.65, 6.0, 0.06, fill=SAND)
+box(s, 6.8, 1.65, 6.0, 0.06, fill=INK)
 txt(s, 'DISCOVERY AND CAPTIONS', 7.05, 1.78, 5.5, 0.3, sz=8.5, bold=True, color=GRAY)
 ig_disc = [
     ('Name field','"Fluso | deep work AI". The name field is search-indexed; keywords live there, not in hashtags.'),
@@ -692,56 +724,57 @@ for i, (t, b) in enumerate(ig_disc):
 
 
 # ══════════════════════════════════════════════════════════
-# S17  FACEBOOK + CHANNEL MATRIX
+# S18  FACEBOOK + CHANNEL MATRIX
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-header(s, '10  Platform playbooks  |  Facebook + the channel matrix')
+header(s, '11  Platform playbooks  |  Facebook + the channel matrix')
 
-box(s, 0.55, 1.05, 12.23, 1.7, fill=WHITE)
-box(s, 0.55, 1.05, 12.23, 0.06, fill=LGRAY)
+box(s, 0.55, 1.05, 12.23, 1.55, fill=WHITE)
+box(s, 0.55, 1.05, 12.23, 0.06, fill=INK)
 txt(s, 'FACEBOOK', 0.8, 1.18, 3.0, 0.3, sz=8.5, bold=True, color=GRAY)
 txt(s, 'Role: warm remarketing and community, not organic reach. Repurpose top LinkedIn posts after 24 to 48 hours with a Facebook-specific first line. The About section is keyword-indexed for search: write it as one dense, accurate paragraph. Retarget site visitors and the email list; LinkedIn handles cold.',
-    0.8, 1.5, 11.7, 1.1, sz=10, color=INK)
+    0.8, 1.5, 11.7, 1.0, sz=10, color=INK)
 
-# Channel matrix
-txt(s, 'THE CHANNEL MATRIX', 0.55, 3.05, 6, 0.3, sz=8.5, bold=True, color=GRAY)
-box(s, 0.55, 3.4, 12.23, 0.45, fill=INK)
-mcols = [('CHANNEL',0.75,1.5),('BRAND',2.4,1.2),('ROLE',3.7,3.3),('CADENCE',7.1,2.0),('KPI',9.2,3.4)]
+txt(s, 'THE CHANNEL MATRIX', 0.55, 2.9, 6, 0.3, sz=8.5, bold=True, color=GRAY)
+box(s, 0.55, 3.25, 12.23, 0.45, fill=INK2)
+mcols = [('CHANNEL',0.75,1.4),('LED BY',2.2,1.6),('ROLE',3.85,3.2),('CADENCE',7.15,1.95),('KPI',9.2,3.4)]
 for (h, xx, ww) in mcols:
-    txt(s, h, xx, 3.48, ww, 0.3, sz=8, bold=True, color=WHITE)
+    txt(s, h, xx, 3.33, ww, 0.3, sz=8, bold=True, color=WHITE)
 mrows = [
-    ('LinkedIn','Prem','Authority and inbound in regulated enterprise','3 to 4 per week','Branded search, SQL mentions'),
+    ('LinkedIn','Prem + portfolio','Authority and inbound in regulated enterprise','3 to 4 per week','Branded search, SQL mentions'),
     ('X','Fluso','Builder credibility, product proof in public','1 to 2 per day','Qualified signups from profile'),
-    ('Instagram','Fluso','Process visibility, the Swiss visual world','4 to 5 per week','Profile-to-site clicks, activations'),
+    ('Instagram','Fluso-weighted','Process visibility, the Swiss visual world','4 to 5 per week','Profile-to-site clicks, activations'),
     ('Facebook','Both','Warm remarketing and community','2 to 3 per week, repurposed','Re-engagement CTR'),
 ]
 for i, row in enumerate(mrows):
     bg = WHITE if i % 2 == 0 else PAPER2
-    box(s, 0.55, 3.85 + i*0.72, 12.23, 0.72, fill=bg)
-    for (h, xx, ww), cell in zip(mcols, row):
-        txt(s, cell, xx, 3.97 + i*0.72, ww, 0.55, sz=9.5,
-            bold=(xx == 0.75), color=INK)
+    box(s, 0.55, 3.7 + i*0.72, 12.23, 0.72, fill=bg)
+    for j, ((h, xx, ww), cell) in enumerate(zip(mcols, row)):
+        txt(s, cell, xx, 3.82 + i*0.72, ww, 0.55, sz=9.5, bold=(j == 0), color=INK)
+
+txt(s, 'Across all channels combined, output share holds at 40% Fluso, 60% Prem and the rest of the portfolio.',
+    0.55, 6.7, 12.2, 0.32, sz=9.5, bold=True, color=INK)
 txt(s, 'Website guidance is deliberately absent: no recommendations until the live site has been reviewed page by page.',
-    0.55, 6.95, 12.2, 0.35, sz=9, color=GRAY)
+    0.55, 7.05, 12.2, 0.3, sz=9, color=GRAY)
 
 
 # ══════════════════════════════════════════════════════════
-# S18  CONTENT PILLARS: PREM
+# S19  CONTENT PILLARS: PREM + PORTFOLIO
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-header(s, '11  Content pillars  |  Prem')
-txt(s, 'Every Prem piece belongs to one pillar. If it fits none, it does not ship.',
+header(s, '12  Content pillars  |  Prem and the portfolio  (the 60%)')
+txt(s, 'Every piece belongs to one pillar. If it fits none, it does not ship.',
     0.55, 0.95, 12, 0.35, sz=11, color=GRAY)
 p_pillars = [
-    ('Verifiable AI','40%','Reticle attestation\nTEE architecture explainers\nProof walkthroughs\nOpen source vs policy promises'),
-    ('Compliance architecture','30%','EU AI Act interpretation\nGDPR and HIPAA by use case\nAudit readiness frameworks\nWhat a regulator actually asks'),
-    ('Engineering depth','20%','Open-model selection\nOn-premise deployment guides\nPortability benchmarks\nReticle contributor updates'),
-    ('Customer evidence','10%','Named case studies only\nQuantified outcomes\nQuotes with name and title\nRegulator-facing results'),
+    ('Verifiable AI','35%','Reticle attestation\nTEE architecture explainers\nProof walkthroughs\nOpen source vs policy promises'),
+    ('Compliance architecture','25%','EU AI Act interpretation\nGDPR and HIPAA by use case\nAudit readiness frameworks\nWhat a regulator actually asks'),
+    ('Engineering depth','25%','Prem Studio guides and tutorials\nOpen-model selection\nOn-premise deployment\nPortability benchmarks'),
+    ('Customer evidence','15%','Named case studies only\nQuantified outcomes\nQuotes with name and title\nRegulator-facing results'),
 ]
 for i, (t, pct, topics) in enumerate(p_pillars):
     x = 0.55 + i * 3.22
     box(s, x, 1.45, 2.95, 5.55, fill=WHITE)
-    box(s, x, 1.45, 2.95, 0.06, fill=grad(i/3))
+    box(s, x, 1.45, 2.95, 0.06, fill=INK)
     txt(s, pct, x+0.25, 1.65, 2.4, 0.6, sz=26, bold=True, color=INK)
     txt(s, t, x+0.25, 2.35, 2.5, 0.75, sz=13, bold=True, color=INK)
     rule(s, x+0.25, 3.2, 2.45, color=PAPER2, weight=0.02)
@@ -749,11 +782,11 @@ for i, (t, pct, topics) in enumerate(p_pillars):
 
 
 # ══════════════════════════════════════════════════════════
-# S19  CONTENT PILLARS: FLUSO
+# S20  CONTENT PILLARS: FLUSO
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-header(s, '11  Content pillars  |  Fluso')
-txt(s, 'Utility leads. 60% of output shows the product doing real work.',
+header(s, '12  Content pillars  |  Fluso  (the 40%)')
+txt(s, 'Utility leads. 60% of Fluso output shows the product doing real work.',
     0.55, 0.95, 12, 0.35, sz=11, color=GRAY)
 f_pillars = [
     ('Product utility','35%','Use cases with time data\nBefore and after workflows\nModel-to-task matching\nSession audit trail demos'),
@@ -764,7 +797,7 @@ f_pillars = [
 for i, (t, pct, topics) in enumerate(f_pillars):
     x = 0.55 + i * 3.22
     box(s, x, 1.45, 2.95, 5.55, fill=WHITE)
-    box(s, x, 1.45, 2.95, 0.06, fill=grad(i/3))
+    box(s, x, 1.45, 2.95, 0.06, fill=INK)
     txt(s, pct, x+0.25, 1.65, 2.4, 0.6, sz=26, bold=True, color=INK)
     txt(s, t, x+0.25, 2.35, 2.5, 0.75, sz=13, bold=True, color=INK)
     rule(s, x+0.25, 3.2, 2.45, color=PAPER2, weight=0.02)
@@ -772,20 +805,20 @@ for i, (t, pct, topics) in enumerate(f_pillars):
 
 
 # ══════════════════════════════════════════════════════════
-# S20  AUDIENCE ARCHITECTURE
+# S21  AUDIENCE ARCHITECTURE
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
 header(s, '12  Audience architecture  |  Persona to platform')
-box(s, 0.55, 1.05, 12.23, 0.46, fill=INK)
-acols = [('PERSONA',0.7,2.2),('BRAND',2.95,1.0),('CHANNEL',4.0,1.8),('CONTENT',5.85,3.1),('JOB TO BE DONE',9.0,3.7)]
+box(s, 0.55, 1.05, 12.23, 0.46, fill=INK2)
+acols = [('PERSONA',0.7,2.2),('LEAD BRAND',2.95,1.2),('CHANNEL',4.2,1.7),('CONTENT',5.95,3.0),('JOB TO BE DONE',9.0,3.7)]
 for (h, xx, ww) in acols:
     txt(s, h, xx, 1.12, ww, 0.32, sz=7.5, bold=True, color=WHITE)
 arows = [
     ('Compliance owner (CISO)','Prem','LinkedIn, direct','EU AI Act breakdowns, attestation explainers, audit frameworks','"Help me not get fired when the regulator asks how we use AI."'),
     ('Champion (CTO, VP Eng)','Prem','LinkedIn, GitHub','Architecture posts, portability data, Reticle technical docs','"Give me technical proof I can put in front of the board."'),
-    ('Validator (security eng)','Prem + Fluso','GitHub, X','TEE explainers, benchmarks, open-source contribution posts','"Show me the code, not the marketing page."'),
+    ('Validator (security eng)','Prem + Reticle','GitHub, X','TEE explainers, benchmarks, open-source contribution posts','"Show me the code, not the marketing page."'),
     ('Vertical buyer (legal ops)','Prem','LinkedIn, events','Cost comparisons vs legal AI tools, ROI evidence, case studies','"Beat the incumbents on price, match them on accuracy."'),
-    ('Developer / builder','Fluso','X, GitHub, community','API docs, model selection guides, workflow teardowns','"Let me try it in 10 minutes without talking to sales."'),
+    ('Developer / builder','Prem Studio + Fluso','X, GitHub, community','Studio tutorials, model selection guides, workflow teardowns','"Let me try it in 10 minutes without talking to sales."'),
     ('Prosumer / power user','Fluso','Instagram, X','Deep-work content, 20-minute workflows, productivity data','"Help me do 3 hours of thinking in 45 minutes."'),
 ]
 for i, row in enumerate(arows):
@@ -796,20 +829,21 @@ for i, row in enumerate(arows):
 
 
 # ══════════════════════════════════════════════════════════
-# S21  VOCABULARY
+# S22  VOCABULARY
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
 header(s, '13  Vocabulary  |  Words we own, words we never use')
 vcols = [
-    ('PREM OWNS', PERI, ['Verifiable','Attestation','Proof, not promise','On-premise','Sovereign','Auditable','"At the hardware layer"','Hardware-signed','"Per inference"','Reticle (always capitalised)','Model portability','"Your jurisdiction governs"']),
-    ('FLUSO OWNS', CORAL, ['Deep work','Focused session','"20-minute session"','Compounding memory','Honest accuracy','Session audit trail','Open model','"No black box"','Cognitive load','Workflow, not chat','"Work that needs thinking"','"By Prem"']),
-    ('NEITHER USES', FN_RED, ['Revolutionary, game-changing','Effortless, seamless','"AI-powered"','"The future of work"','Unlock, empower','"We\'re excited to announce"','"Privacy-first" as lead claim','Em dashes in copy','"Not X, but Y"','Rhetorical question hooks','Fragment staccato','Uncited figures']),
+    ('PREM OWNS', ['Private Super Intelligence','Verifiable','Attestation','Proof, not promise','On-premise','Sovereign','Auditable','"At the hardware layer"','Hardware-signed','"Per inference"','Reticle (always capitalised)','"Your jurisdiction governs"']),
+    ('FLUSO OWNS', ['Deep work','Focused session','"20-minute session"','Compounding memory','Honest accuracy','Session audit trail','Open model','"No black box"','Cognitive load','Workflow, not chat','"Work that needs thinking"','"By Prem"']),
+    ('NEITHER USES', ['Revolutionary, game-changing','Effortless, seamless','"AI-powered"','"The future of work"','Unlock, empower','"We\'re excited to announce"','"Privacy-first" as lead claim','Em dashes in copy','"Not X, but Y"','Rhetorical question hooks','Fragment staccato','Uncited figures']),
 ]
-for i, (t, accent, words) in enumerate(vcols):
+for i, (t, words) in enumerate(vcols):
     x = 0.55 + i * 4.27
+    accent = INK if i < 2 else FN_RED
     box(s, x, 1.05, 3.95, 6.05, fill=WHITE)
     box(s, x, 1.05, 3.95, 0.06, fill=accent)
-    txt(s, t, x+0.25, 1.18, 3.5, 0.32, sz=9, bold=True, color=accent if accent != PERI else rgb(86,104,200))
+    txt(s, t, x+0.25, 1.18, 3.5, 0.32, sz=9, bold=True, color=accent)
     for j, w in enumerate(words):
         pre = '×  ' if i == 2 else ''
         txt(s, pre + w, x+0.25, 1.62 + j*0.45, 3.55, 0.4, sz=9.5,
@@ -817,7 +851,7 @@ for i, (t, accent, words) in enumerate(vcols):
 
 
 # ══════════════════════════════════════════════════════════
-# S22  POSITIONING TEST
+# S23  POSITIONING TEST
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
 header(s, '13  The positioning test  |  Run before every campaign')
@@ -839,12 +873,12 @@ for i, (l, b) in enumerate(tests):
 
 
 # ══════════════════════════════════════════════════════════
-# S23  GOVERNANCE (roles only, no names)
+# S24  GOVERNANCE (roles only)
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
 header(s, '13  Governance  |  Sign-off by role')
 txt(s, 'Approval means sign-off before publication, not editing rights.', 0.55, 0.95, 12, 0.35, sz=11, color=GRAY)
-box(s, 0.55, 1.4, 12.23, 0.44, fill=INK)
+box(s, 0.55, 1.4, 12.23, 0.44, fill=INK2)
 gcols = [('CONTENT TYPE',0.75,3.4),('APPROVING ROLE',4.2,2.7),('WHY',7.0,5.8)]
 for (h, xx, ww) in gcols:
     txt(s, h, xx, 1.47, ww, 0.32, sz=8, bold=True, color=WHITE)
@@ -862,23 +896,23 @@ for i, (ct, ap, why) in enumerate(grows):
     bg = WHITE if i % 2 == 0 else PAPER2
     box(s, 0.55, 1.84 + i*0.64, 12.23, 0.64, fill=bg)
     txt(s, ct, 0.75, 1.92 + i*0.64, 3.4, 0.52, sz=9, bold=True, color=INK)
-    txt(s, ap, 4.2, 1.92 + i*0.64, 2.7, 0.52, sz=9, color=rgb(86,104,200))
+    txt(s, ap, 4.2, 1.92 + i*0.64, 2.7, 0.52, sz=9, color=GRAY)
     txt(s, why, 7.0, 1.92 + i*0.64, 5.7, 0.52, sz=8.5, color=GRAY)
 
 
 # ══════════════════════════════════════════════════════════
-# S24  BACK COVER
+# S25  BACK COVER
 # ══════════════════════════════════════════════════════════
 s = ns(); add_bg(s, PAPER)
-ridge(s, [(0,6.45),(2.4,5.85),(4.8,6.4),(7.2,5.7),(9.6,6.35),(12.0,5.95),(13.34,6.4)], PERI_T)
-ridge(s, [(0,6.95),(3.3,6.45),(6.6,6.9),(9.9,6.35),(13.34,6.85)], SAND_T)
+ridge(s, [(0,6.45),(2.4,5.85),(4.8,6.4),(7.2,5.7),(9.6,6.35),(12.0,5.95),(13.34,6.4)], R1)
+ridge(s, [(0,6.95),(3.3,6.45),(6.6,6.9),(9.9,6.35),(13.34,6.85)], R2)
 dot_row(s, 0.62, 1.5)
 txt(s, 'One rule above all others:', 0.55, 1.85, 11, 0.5, sz=15, color=GRAY)
 txt(s, 'Be consistently more useful\nthan you are impressive.', 0.55, 2.4, 11.5, 1.6, sz=34, bold=True, color=INK)
 rule(s, 0.57, 4.35, 3.2, color=INK)
 txt(s, 'The brand is a promise kept in every post, every document, every conversation. Hold the standard.',
     0.57, 4.55, 9.5, 0.6, sz=11, color=GRAY)
-txt(s, 'Prem + Fluso Brand Bible  v2.0   June 2026   Internal use only', 0.57, 5.25, 9, 0.35, sz=9, color=LGRAY)
+txt(s, 'Prem Brand Bible  v3.0   June 2026   Internal use only', 0.57, 5.25, 9, 0.35, sz=9, color=LGRAY)
 
 prs.save('/home/user/Cadence-Architecture-Deck/PremAI-Fluso-Brand-Bible.pptx')
 print(f'Saved {len(prs.slides)} slides')
