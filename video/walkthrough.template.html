@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cadence AI — Animated Walkthrough</title>
+<!-- GENERATED from video/walkthrough.template.html + index.html by video/render.cjs. Edit those, not this file. -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/*DECK_CSS*/
+</style>
+<style>
+  /* ─── Video overrides ───────────────────────── */
+  * { transition: none !important; animation: none !important; }
+
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+  body {
+    font-family: 'Inter', 'Noto Color Emoji', -apple-system, sans-serif;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  #stage {
+    position: relative; flex-shrink: 0;
+    width: 1536px; height: 864px;
+    background: var(--bg); overflow: hidden;
+  }
+
+  .bg-grid {
+    position: absolute; inset: -64px;
+    background-image:
+      linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+            mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+  }
+  .orb { position: absolute; width: 1000px; height: 1000px; margin: -500px 0 0 -500px; border-radius: 50%; }
+  .orb.a { background: radial-gradient(circle, rgba(108,92,231,.20), transparent 62%); }
+  .orb.b { background: radial-gradient(circle, rgba(0,210,160,.10), transparent 62%); }
+
+  #brand {
+    position: absolute; top: 28px; left: 40px; z-index: 5;
+    font-size: 12px; font-weight: 700; letter-spacing: 4px; color: var(--text-dim);
+  }
+  #brand b { color: var(--accent-glow); }
+  #progress { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255,255,255,.05); z-index: 5; }
+  #progress .fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); transform-origin: left; }
+  #fade { position: absolute; inset: 0; background: #000; z-index: 10; pointer-events: none; }
+
+  .scene { position: absolute; inset: 0; display: none; transform-origin: 50% 50%; }
+  .scene .slide {
+    position: absolute; inset: 0; min-height: 0;
+    padding: 64px 96px; border-bottom: none;
+  }
+  .fit { width: 100%; transform-origin: 50% 50%; }
+
+  .word { display: inline-block; }
+  .code-block .caret {
+    display: inline-block; width: 8px; height: 1.15em; margin-left: 2px;
+    background: var(--accent-glow); vertical-align: text-bottom;
+  }
+  .pipeline { position: relative; }
+  .pipeline-node { position: relative; z-index: 2; }
+  .packet {
+    position: absolute; left: 0; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px;
+    border-radius: 50%; background: #fff; z-index: 1;
+    box-shadow: 0 0 10px 3px var(--accent-glow), 0 0 32px 12px rgba(108,92,231,.55);
+  }
+
+  /* Intro / outro cards */
+  .title-card {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  }
+  .ring {
+    position: absolute; left: 50%; top: 50%; width: 520px; height: 520px; margin: -260px 0 0 -260px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent, rgba(108,92,231,.55), rgba(0,210,160,.45), transparent 70%);
+    -webkit-mask: radial-gradient(circle, transparent 252px, #000 254px, #000 259px, transparent 261px);
+            mask: radial-gradient(circle, transparent 252px, #000 254px, #000 259px, transparent 261px);
+  }
+  .big-logo {
+    font-size: 84px; font-weight: 900; letter-spacing: 14px; line-height: 1;
+    color: #fff; position: relative;
+  }
+  .big-logo .ch { display: inline-block; }
+  .big-logo .ch.accent {
+    background: linear-gradient(135deg, var(--accent-glow), var(--green));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .rule {
+    width: 360px; height: 2px; margin: 34px 0 26px; position: relative;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--green), transparent);
+  }
+  .tagline { font-size: 22px; color: var(--text-dim); letter-spacing: .5px; position: relative; }
+  .tagline b { color: var(--text); font-weight: 600; }
+  .fine { margin-top: 18px; font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 2px; color: var(--text-dim); position: relative; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="bg-grid"></div>
+  <div class="orb a"></div>
+  <div class="orb b"></div>
+
+  <section class="scene" data-kind="intro">
+    <div class="title-card">
+      <div class="ring"></div>
+      <div class="big-logo" data-chars>CADENCE <span class="accent">AI</span></div>
+      <div class="rule"></div>
+      <div class="tagline">Platform Architecture <b>·</b> Animated Walkthrough</div>
+    </div>
+  </section>
+
+<!--SLIDES-->
+
+  <section class="scene" data-kind="outro">
+    <div class="title-card">
+      <div class="ring"></div>
+      <div class="big-logo" data-chars>CADENCE <span class="accent">AI</span></div>
+      <div class="rule"></div>
+      <div class="tagline" data-words>Crawls <b>·</b> Thinks <b>·</b> Learns <b>·</b> Generates <b>·</b> Iterates</div>
+      <div class="fine">CADENCE AI v2.0 · AI LUMINATI COLLABS</div>
+    </div>
+  </section>
+
+  <div id="brand">CADENCE <b>AI</b></div>
+  <div id="progress"><div class="fill"></div></div>
+  <div id="fade"></div>
+</div>
+
+<script>
+(() => {
+  const W = 1536, H = 864;
+  const XFADE = 0.8;          // scene cross-fade length (s)
+  const CAPTURE = new URLSearchParams(location.search).has('capture');
+
+  // ─── Math helpers ───────────────────────────────────────────
+  const clamp = (x, a = 0, b = 1) => (x < a ? a : x > b ? b : x);
+  const lerp = (a, b, p) => a + (b - a) * p;
+  const P = (t, s, d) => clamp((t - s) / d);
+  const E = {
+    out: p => 1 - Math.pow(1 - p, 3),
+    inOut: p => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2),
+    back: p => { const c1 = 1.4, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); },
+    expo: p => (p >= 1 ? 1 : 1 - Math.pow(2, -10 * p)),
+  };
+  const textLen = el => el.textContent.replace(/\s+/g, ' ').trim().length;
+
+  // ─── Per-element animation state, composited once per frame ─
+  const fresh = () => ({ o: 1, x: 0, y: 0, sc: 1, r: 0, blur: 0, glow: 0, hl: 0, dim: 0, clip: 0 });
+  const DIM = [136, 136, 168], BRIGHT = [232, 232, 240];
+  const mixRGB = (a, b, p) => `rgb(${a.map((v, i) => Math.round(lerp(v, b[i], p))).join(',')})`;
+
+  function apply(el) {
+    const s = el.__s, a = el.__a;
+    const o = s.o * (1 - s.dim);
+    el.style.opacity = o >= 0.999 ? '' : o.toFixed(4);
+    const tf = [];
+    if (s.x || s.y) tf.push(`translate(${s.x.toFixed(2)}px,${s.y.toFixed(2)}px)`);
+    if (s.sc !== 1) tf.push(`scale(${s.sc.toFixed(4)})`);
+    if (s.r) tf.push(`rotate(${s.r.toFixed(2)}deg)`);
+    el.style.transform = tf.join(' ');
+    el.style.filter = s.blur > 0.05 ? `blur(${s.blur.toFixed(2)}px)` : '';
+    if (a.clip) el.style.clipPath = `inset(-25% ${(s.clip * 100).toFixed(2)}% -25% -5%)`;
+    if (a.kind === 'box') {
+      el.style.boxShadow = s.glow > 0.002
+        ? `0 0 0 1px rgba(${a.rgb},${s.glow.toFixed(3)}), 0 16px 50px rgba(${a.rgb},${(0.3 * s.glow).toFixed(3)})`
+        : '';
+    } else if (a.kind === 'li') {
+      el.style.color = s.hl > 0.002 ? mixRGB(DIM, BRIGHT, s.hl) : '';
+    } else if (a.kind === 'tr') {
+      for (const td of a.tds) {
+        td.style.background = s.hl > 0.002 ? `rgba(26,26,39,${s.hl.toFixed(3)})` : '';
+        td.style.color = s.hl > 0.002 ? mixRGB(DIM, BRIGHT, s.hl) : '';
+      }
+    }
+  }
+
+  // ─── Scene builder context ──────────────────────────────────
+  function Ctx(scene) {
+    return { scene, tracks: [], els: new Set(), focus: [], end: 0 };
+  }
+  function add(ctx, el, meta) {
+    if (!el.__a) el.__a = { kind: 'generic' };
+    if (meta) Object.assign(el.__a, meta);
+    ctx.els.add(el);
+    return el;
+  }
+  const done = (ctx, t) => { ctx.end = Math.max(ctx.end, t); return t; };
+
+  function fadeUp(ctx, el, s, d = 0.7, dist = 22, blur = 0) {
+    add(ctx, el);
+    ctx.tracks.push(t => {
+      const p = E.out(P(t, s, d)), st = el.__s;
+      st.o *= p; st.y += (1 - p) * dist; if (blur) st.blur += (1 - p) * blur;
+    });
+    return done(ctx, s + d);
+  }
+  function slideX(ctx, el, s, d = 0.6, dist = -28) {
+    add(ctx, el);
+    ctx.tracks.push(t => {
+      const p = E.out(P(t, s, d)), st = el.__s;
+      st.o *= p; st.x += (1 - p) * dist;
+    });
+    return done(ctx, s + d);
+  }
+  function popIn(ctx, el, s, d = 0.7, from = 0.86, rot = 0) {
+    add(ctx, el);
+    ctx.tracks.push(t => {
+      const p = P(t, s, d), st = el.__s;
+      st.o *= E.out(p); st.sc *= lerp(from, 1, E.back(p)); st.y += (1 - E.out(p)) * 16; st.r += (1 - E.out(p)) * rot;
+    });
+    return done(ctx, s + d);
+  }
+
+  // Splits an element's text into inline-block word spans (keeps <br>, nested tags).
+  function splitWords(el) {
+    const out = [];
+    const walk = node => {
+      for (const n of [...node.childNodes]) {
+        if (n.nodeType === 3) {
+          const frag = document.createDocumentFragment();
+          for (const part of n.textContent.split(/(\s+)/)) {
+            if (!part) continue;
+            if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(' ')); continue; }
+            const w = document.createElement('span'); w.className = 'word'; w.textContent = part;
+            frag.appendChild(w); out.push(w);
+          }
+          n.replaceWith(frag);
+        } else if (n.nodeType === 1 && n.tagName !== 'BR') {
+          if (n.classList.contains('word')) continue;
+          // gradient-text spans: animate as a single unit
+          if (getComputedStyle(n).webkitBackgroundClip === 'text') { n.classList.add('word'); out.push(n); }
+          else walk(n);
+        }
+      }
+    };
+    walk(el);
+    return out;
+  }
+  function words(ctx, el, s, stagger = 0.055, dist = 26) {
+    const ws = splitWords(el);
+    ws.forEach((w, i) => fadeUp(ctx, w, s + i * stagger, 0.65, dist, 8));
+    return s + ws.length * stagger;
+  }
+  function chars(ctx, el, s, stagger = 0.06) {
+    const list = [];
+    const walk = node => {
+      for (const n of [...node.childNodes]) {
+        if (n.nodeType === 3) {
+          const frag = document.createDocumentFragment();
+          for (const c of n.textContent) {
+            if (c === ' ') { frag.appendChild(document.createTextNode(' ')); continue; }
+            const sp = document.createElement('span'); sp.className = 'ch'; sp.textContent = c;
+            if (node.classList && node.classList.contains('accent')) sp.classList.add('accent');
+            frag.appendChild(sp); list.push(sp);
+          }
+          n.replaceWith(frag);
+        } else if (n.nodeType === 1) {
+          walk(n);
+          if (n.classList.contains('accent')) n.replaceWith(...n.childNodes);
+        }
+      }
+    };
+    walk(el);
+    list.forEach((c, i) => {
+      add(ctx, c);
+      const cs = s + i * stagger;
+      ctx.tracks.push(t => {
+        const p = P(t, cs, 0.8), st = c.__s;
+        st.o *= E.out(p); st.y += (1 - E.out(p)) * 30; st.blur += (1 - E.out(p)) * 12; st.sc *= lerp(1.25, 1, E.out(p));
+      });
+    });
+    return done(ctx, s + list.length * stagger + 0.8);
+  }
+
+  function letterSpace(ctx, el, s) {
+    add(ctx, el);
+    ctx.tracks.push(t => {
+      const p = E.out(P(t, s, 1.0));
+      el.__s.o *= p;
+      el.style.letterSpacing = lerp(14, 4, p).toFixed(2) + 'px';
+    });
+    return done(ctx, s + 1.0);
+  }
+
+  function wipe(ctx, el, s, d = 1.1) {
+    add(ctx, el, { clip: true });
+    ctx.tracks.push(t => {
+      const p = E.inOut(P(t, s, d)), st = el.__s;
+      st.clip = 1 - p; st.x += (1 - p) * -12;
+    });
+    return done(ctx, s + d);
+  }
+
+  function countUp(ctx, el, s, d = 1.4) {
+    const orig = el.textContent.trim();
+    const m = orig.match(/^([^\d]*)([\d.]+)(.*)$/);
+    if (!m) return s;
+    const dec = (m[2].split('.')[1] || '').length, val = parseFloat(m[2]);
+    ctx.tracks.push(t => {
+      const p = E.expo(P(t, s, d));
+      el.textContent = p >= 1 ? orig : m[1] + (val * p).toFixed(dec) + m[3];
+    });
+    return done(ctx, s + d);
+  }
+
+  function typewriter(ctx, el, s, cps = 95) {
+    el.style.minHeight = el.offsetHeight + 'px';
+    const nodes = [];
+    const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n; (n = tw.nextNode());) nodes.push({ n, full: n.textContent, len: /^\s*$/.test(n.textContent) ? 0 : n.textContent.length });
+    const total = nodes.reduce((a, b) => a + b.len, 0);
+    const caret = document.createElement('span'); caret.className = 'caret';
+    el.insertBefore(caret, el.firstChild);
+    const end = s + total / cps;
+    ctx.tracks.push(t => {
+      let left = Math.floor(clamp((t - s) * cps, 0, total));
+      let after = null;
+      for (const r of nodes) {
+        if (!r.len) { r.n.textContent = r.full; continue; }
+        const k = Math.min(left, r.len);
+        r.n.textContent = r.full.slice(0, k);
+        if (k > 0) after = r.n;
+        left -= k;
+      }
+      if (after) after.parentNode.insertBefore(caret, after.nextSibling);
+      else el.insertBefore(caret, el.firstChild);
+      const typing = t >= s && t < end;
+      caret.style.opacity = t < s - 0.2 ? '0' : typing ? '1' : (Math.floor((t - end) * 2) % 2 ? '0' : '1');
+    });
+    return done(ctx, end);
+  }
+
+  // ─── Block builders ─────────────────────────────────────────
+  function card(ctx, el, s) {
+    add(ctx, el, { kind: 'box', rgb: '162,155,254' });
+    ctx.tracks.push(t => {
+      const p = P(t, s, 0.8), st = el.__s;
+      st.o *= E.out(p); st.y += (1 - E.out(p)) * 34; st.sc *= lerp(0.96, 1, E.back(p));
+    });
+    const icon = el.querySelector(':scope > .icon');
+    if (icon) popIn(ctx, icon, s + 0.25, 0.7, 0.3, -25);
+    ctx.focus.push(el);
+    return done(ctx, s + 0.8);
+  }
+
+  function cards(ctx, el, s) {
+    [...el.children].forEach((c, i) => card(ctx, c, s + i * 0.16));
+    return s + el.children.length * 0.16 + 0.35;
+  }
+
+  function stats(ctx, el, s) {
+    [...el.children].forEach((st, i) => {
+      popIn(ctx, st, s + i * 0.14);
+      const v = st.querySelector('.stat-value');
+      if (v) countUp(ctx, v, s + i * 0.14 + 0.1);
+    });
+    return s + el.children.length * 0.14 + 0.4;
+  }
+
+  function featureList(ctx, el, s) {
+    [...el.children].forEach((li, i) => {
+      const ls = s + i * 0.2;
+      slideX(ctx, li, ls);
+      add(ctx, li, { kind: 'li' });
+      const chk = li.querySelector('.check');
+      if (chk) popIn(ctx, chk, ls + 0.1, 0.6, 0, 180);
+      ctx.focus.push(li);
+    });
+    return s + el.children.length * 0.2 + 0.3;
+  }
+
+  function table(ctx, el, s) {
+    const head = el.querySelector('thead tr');
+    if (head) fadeUp(ctx, head, s, 0.5, 12);
+    const rows = [...el.querySelectorAll('tbody tr')];
+    rows.forEach((tr, i) => {
+      const rs = s + 0.25 + i * 0.14;
+      slideX(ctx, tr, rs, 0.6, -24);
+      add(ctx, tr, { kind: 'tr', tds: [...tr.children] });
+      tr.querySelectorAll('.badge').forEach(b => popIn(ctx, b, rs + 0.15, 0.6, 0.5));
+      ctx.focus.push(tr);
+    });
+    return s + 0.25 + rows.length * 0.14 + 0.35;
+  }
+
+  function pipeline(ctx, el, s) {
+    const nodes = [...el.querySelectorAll('.pipeline-node')];
+    const step = 0.42;
+    [...el.children].forEach(ch => {
+      if (ch.classList.contains('pipeline-node')) {
+        const i = nodes.indexOf(ch);
+        const cls = ch.classList;
+        const rgb = cls.contains('green') ? '0,210,160' : cls.contains('orange') ? '240,147,43' : '162,155,254';
+        add(ctx, ch, { kind: 'box', rgb });
+        popIn(ctx, ch, s + i * step, 0.7, 0.8);
+      } else if (ch.classList.contains('pipeline-arrow')) {
+        const nextIdx = nodes.indexOf(ch.nextElementSibling);
+        slideX(ctx, ch, s + nextIdx * step - 0.22, 0.45, -16);
+      }
+    });
+
+    // A data packet that flows node → node and lights each one up as it passes.
+    const pk = document.createElement('div'); pk.className = 'packet'; el.appendChild(pk);
+    const cx = nodes.map(n => n.offsetLeft + n.offsetWidth / 2);
+    const hw = nodes.map(n => n.offsetWidth / 2);
+    const cy = nodes[0].offsetTop + nodes[0].offsetHeight / 2;
+    const hop = 0.75, travel = (nodes.length - 1) * hop, cycle = travel + 1.1;
+    const ps = s + nodes.length * step + 0.4;
+    ctx.tracks.push(t => {
+      const tt = t - ps;
+      if (tt < 0) { pk.style.opacity = '0'; return; }
+      const k = tt % cycle;
+      const seg = Math.min(Math.floor(k / hop), nodes.length - 2);
+      const x = lerp(cx[seg], cx[seg + 1], E.inOut(clamp((k - seg * hop) / hop)));
+      const vis = Math.min(clamp(k / 0.2), 1 - clamp((k - travel) / 0.35));
+      pk.style.opacity = vis.toFixed(3);
+      pk.style.transform = `translate(${x.toFixed(2)}px,${cy}px)`;
+      nodes.forEach((n, i) => {
+        const g = clamp(1.25 - Math.abs(x - cx[i]) / hw[i]) * vis;
+        n.__s.glow = Math.max(n.__s.glow, g);
+      });
+    });
+    return done(ctx, s + nodes.length * step + 0.2);
+  }
+
+  function block(ctx, el, s) {
+    const c = el.classList;
+    if (c.contains('stats')) return stats(ctx, el, s);
+    if (c.contains('cards')) return cards(ctx, el, s);
+    if (c.contains('card')) return card(ctx, el, s) - 0.5;
+    if (c.contains('pipeline')) return pipeline(ctx, el, s);
+    if (c.contains('feature-list')) return featureList(ctx, el, s);
+    if (c.contains('data-table')) return table(ctx, el, s);
+    if (c.contains('code-block')) { fadeUp(ctx, el, s, 0.5, 16); return typewriter(ctx, el, s + 0.35) - 0.4; }
+    if (c.contains('two-col')) {
+      let end = s;
+      [...el.children].forEach((col, i) => { end = Math.max(end, block(ctx, col, s + i * 0.18)); });
+      return end;
+    }
+    if (el.tagName === 'H3') { fadeUp(ctx, el, s, 0.6, 14); return s + 0.25; }
+    if (el.tagName === 'DIV' && el.children.length && !el.querySelector(':scope > p:only-child')) {
+      let t = s;
+      for (const ch of el.children) t = block(ctx, ch, t);
+      return t;
+    }
+    fadeUp(ctx, el, s, 0.7, 16);
+    return s + 0.3;
+  }
+
+  // Sequentially spotlights focus items (cards, list items, table rows).
+  function spotlight(ctx, s) {
+    const items = ctx.focus;
+    if (!items.length) return s;
+    let cur = s;
+    const wins = items.map(el => {
+      const d = clamp(0.8 + textLen(el) / 75, 1.2, 3.2);
+      const w = { el, s: cur, d }; cur += d; return w;
+    });
+    ctx.tracks.push(t => {
+      const act = wins.map(w => E.inOut(P(t, w.s, 0.35)) * (1 - E.inOut(P(t, w.s + w.d - 0.1, 0.35))));
+      const A = Math.max(...act);
+      wins.forEach((w, i) => {
+        const st = w.el.__s, a = act[i], kind = w.el.__a.kind;
+        st.glow = Math.max(st.glow, a);
+        st.hl = Math.max(st.hl, a);
+        st.dim = Math.max(st.dim, 0.45 * clamp(A - a));
+        if (kind === 'box') st.y -= 6 * a;
+        if (kind === 'li') st.x += 8 * a;
+      });
+    });
+    return cur;
+  }
+
+  // ─── Scene builders ─────────────────────────────────────────
+  function buildSlide(ctx) {
+    const slide = ctx.scene.querySelector('.slide');
+    const fit = slide.querySelector('.fit');
+    const num = fit.querySelector('.slide-number');
+    if (num) { slide.appendChild(num); fadeUp(ctx, num, 0.3, 0.6, -10); }
+
+    // Scale dense slides down so everything fits inside the frame.
+    const avail = slide.clientHeight - 128;
+    if (fit.scrollHeight > avail) fit.style.transform = `scale(${(avail / fit.scrollHeight).toFixed(4)})`;
+
+    let c = 0.35;
+    for (const el of [...fit.children]) {
+      if (el.classList.contains('logo-mark')) { letterSpace(ctx, el, c); c += 0.25; }
+      else if (el.tagName === 'H1') { wipe(ctx, el, c); c += 0.7; }
+      else if (el.tagName === 'H2') { c = words(ctx, el, c) + 0.25; }
+      else if (el.classList.contains('subtitle')) { fadeUp(ctx, el, c, 0.9, 18, 4); c += 0.6; }
+      else c = block(ctx, el, c);
+    }
+    const reveal = Math.max(ctx.end, c) + 0.3;
+    const after = spotlight(ctx, reveal + 0.3);
+    const hold = ctx.focus.length ? 1.4 : clamp(textLen(fit) / 90, 2.5, 5);
+    return after + hold;
+  }
+
+  function buildTitleCard(ctx, kind) {
+    const card = ctx.scene.querySelector('.title-card');
+    const ring = card.querySelector('.ring'), logo = card.querySelector('.big-logo');
+    const rule = card.querySelector('.rule'), tag = card.querySelector('.tagline'), fine = card.querySelector('.fine');
+    add(ctx, ring);
+    ctx.tracks.push(t => {
+      const p = E.out(P(t, 0.1, 1.6)), st = ring.__s;
+      st.o *= p; st.sc *= lerp(0.7, 1, p); st.r += t * 22;
+    });
+    chars(ctx, logo, 0.3);
+    add(ctx, rule);
+    ctx.tracks.push(t => { const p = E.inOut(P(t, 0.8, 0.9)); rule.__s.o *= p; rule.style.width = (360 * p).toFixed(1) + 'px'; });
+    if (tag.hasAttribute('data-words')) words(ctx, tag, 1.2, 0.09, 14);
+    else fadeUp(ctx, tag, 1.2, 0.8, 14, 4);
+    if (fine) fadeUp(ctx, fine, 2.0, 0.8, 10);
+    return kind === 'intro' ? 3.6 : 5.2;
+  }
+
+  // ─── Init ───────────────────────────────────────────────────
+  const stage = document.getElementById('stage');
+  const scenes = [...document.querySelectorAll('.scene')];
+  const brand = document.getElementById('brand');
+  const fill = document.querySelector('#progress .fill');
+  const fadeEl = document.getElementById('fade');
+  const orbA = document.querySelector('.orb.a'), orbB = document.querySelector('.orb.b'), grid = document.querySelector('.bg-grid');
+  let built = [], TOTAL = 0;
+
+  async function init() {
+    // Show everything (invisibly) so web fonts are requested, then wait for them.
+    scenes.forEach(s => { s.style.display = 'block'; s.style.visibility = 'hidden'; });
+    try {
+      await Promise.all([
+        ...[400, 500, 600, 700, 800, 900].map(w => document.fonts.load(`${w} 20px Inter`)),
+        document.fonts.load('400 14px "JetBrains Mono"'),
+        document.fonts.load('500 14px "JetBrains Mono"'),
+      ]);
+    } catch (e) { /* fall back to system fonts */ }
+    await document.fonts.ready;
+    scenes.forEach(s => { s.style.display = 'none'; s.style.visibility = ''; });
+
+    let start = 0;
+    for (const scene of scenes) {
+      scene.style.display = 'block';
+      const ctx = Ctx(scene);
+      const kind = scene.dataset.kind || 'slide';
+      const dur = kind === 'slide' ? buildSlide(ctx) : buildTitleCard(ctx, kind);
+      scene.style.display = 'none';
+      built.push({ scene, ctx, kind, start, dur, els: [...ctx.els] });
+      start += dur - XFADE;
+    }
+    const last = built[built.length - 1];
+    TOTAL = last.start + last.dur;
+    window.TOTAL = TOTAL;
+    window.SCENES = built.map(b => ({ kind: b.kind, start: +b.start.toFixed(2), dur: +b.dur.toFixed(2) }));
+    window.renderAt = renderAt;
+    renderAt(0);
+    window.__ready = true;
+    if (!CAPTURE) play();
+  }
+
+  function renderAt(T) {
+    // Background drift
+    orbA.style.transform = `translate(${(380 + 220 * Math.sin(T * 0.21)).toFixed(1)}px,${(260 + 140 * Math.cos(T * 0.17)).toFixed(1)}px)`;
+    orbB.style.transform = `translate(${(1160 + 200 * Math.cos(T * 0.15)).toFixed(1)}px,${(640 + 120 * Math.sin(T * 0.19)).toFixed(1)}px)`;
+    grid.style.transform = `translate(${((T * 6) % 64).toFixed(2)}px,${((T * 3) % 64).toFixed(2)}px)`;
+
+    for (let i = 0; i < built.length; i++) {
+      const b = built[i], t = T - b.start;
+      if (t < 0 || t > b.dur) { b.scene.style.display = 'none'; continue; }
+      b.scene.style.display = 'block';
+      for (const el of b.els) el.__s = fresh();
+      for (const tr of b.ctx.tracks) tr(t);
+      for (const el of b.els) apply(el);
+
+      const pin = i === 0 ? 1 : E.inOut(P(t, 0, XFADE));
+      const pout = i === built.length - 1 ? 0 : E.inOut(P(t, b.dur - XFADE, XFADE));
+      const push = 1 + 0.022 * (t / b.dur);
+      b.scene.style.opacity = (pin * (1 - pout)).toFixed(4);
+      b.scene.style.transform = `scale(${(push * lerp(0.985, 1, pin) * (1 + 0.04 * pout)).toFixed(4)})`;
+      b.scene.style.filter = pout > 0.01 ? `blur(${(6 * pout).toFixed(2)}px)` : '';
+    }
+
+    const first = built[0], last = built[built.length - 1];
+    const chrome = P(T, first.start + first.dur - XFADE, XFADE) * (1 - P(T, last.start, XFADE));
+    brand.style.opacity = chrome.toFixed(3);
+    document.getElementById('progress').style.opacity = chrome.toFixed(3);
+    const s0 = first.start + first.dur - XFADE, s1 = last.start;
+    fill.style.transform = `scaleX(${clamp((T - s0) / (s1 - s0)).toFixed(4)})`;
+    fadeEl.style.opacity = Math.max(1 - P(T, 0, 0.6), P(T, TOTAL - 0.9, 0.9)).toFixed(3);
+  }
+
+  // ─── Live playback (open the HTML file in a browser) ────────
+  function play() {
+    const fitStage = () => {
+      const k = Math.min(innerWidth / W, innerHeight / H);
+      stage.style.transform = `scale(${k})`;
+    };
+    fitStage(); addEventListener('resize', fitStage);
+    let T = 0, last = null, paused = false;
+    addEventListener('keydown', e => {
+      if (e.code === 'Space') paused = !paused;
+      if (e.code === 'ArrowRight') T = Math.min(TOTAL, T + 5);
+      if (e.code === 'ArrowLeft') T = Math.max(0, T - 5);
+    });
+    const loop = now => {
+      if (last !== null && !paused) T = (T + (now - last) / 1000) % TOTAL;
+      last = now;
+      renderAt(T);
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
