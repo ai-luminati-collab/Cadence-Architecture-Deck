@@ -57,19 +57,20 @@ def card(c, accent):
     rows.append(
         f'<tr><td colspan="2" class="ch">'
         f'<span class="cht">{e(c["code"])}  ·  {e(c["name"])}</span><br>'
-        f'<span class="chs">{"VIDEO · " + e(c["length"]) if is_video else "STATIC · single image"} · {e(c["ratio"])} · Mechanic: {e(c["mechanic"])}</span></td></tr>')
+        f'<span class="chs">{"OUR FORMAT: VIDEO · " + e(c["length"]) if is_video else "OUR FORMAT: STATIC · single image"} · {e(c["ratio"])} · Mechanic: {e(c["mechanic"])}</span></td></tr>')
     rows.append(
         '<tr>'
         f'<td class="ref">'
-        f'<p class="lab">THE REFERENCE</p>'
+        f'<p class="lab">THE REFERENCE · {e(ref["kind"])}</p>'
         f'<p><img src="{thumb(ref["yt"])}" width="280" height="210"></p>'
-        f'<p class="b10"><a href="{yt(ref["yt"])}" style="color:{accent}">▶ OPEN THE SOURCE AD ↗</a></p>'
+        f'<p class="b10"><a href="{yt(ref["yt"])}" style="color:{accent}">▶ WATCH THE SOURCE VIDEO ↗</a></p>'
         f'<p class="b10">{e(ref["brand"])}: {e(ref["title"])}</p>'
-        f'<p class="s9">{e(ref["why"])}</p>'
+        + ('' if is_video else '<p class="s9" style="color:#9a3412"><b>Format note:</b> this reference is a video. We borrow its idea and look for a static ad. To see this brand\'s live static ads, use the ad library links below.</p>')
+        + f'<p class="s9">{e(ref["why"])}</p>'
         f'<p class="g8">Their live ads: <a href="{li_lib(ref["lib"])}">LinkedIn Ad Library</a> · <a href="{meta_lib(ref["lib"])}">Meta Ad Library</a>'
         + (f' · <a href="{ref["extra"]}">Campaign write-up</a>' if ref.get("extra") else "") + '</p></td>'
         f'<td class="ours">'
-        f'<p style="font-size:8pt;color:{accent};font-weight:bold">OUR CONCEPT ({"KEY FRAME" if is_video else "MOCKUP"})</p>'
+        f'<p style="font-size:8pt;color:{accent};font-weight:bold">OUR CONCEPT · {"VIDEO (STILL FROM THE STORYBOARD)" if is_video else "STATIC AD MOCKUP"}</p>'
         f'<p><img src="{CDN + MOCK[c["mock"]]}" width="280" height="{mock_h}"></p>'
         f'<p class="b10">What we steal</p><p class="s9">{e(c["steal"])}</p>'
         '</td></tr>')
@@ -90,8 +91,8 @@ out = []
 out.append('<html><head><meta charset="utf-8"><style>body{font-family:Arial}.lab{font-size:8pt;color:#666666;font-weight:bold}.b10{font-size:10pt;font-weight:bold}.s9{font-size:9pt}.s10{font-size:10pt}.g8{font-size:8pt;color:#666666}.ref{width:50%;vertical-align:top;background:#f4f4f4}.ours{width:50%;vertical-align:top;background:#ffffff}.t{border-collapse:collapse;width:100%;border-color:#dddddd}.hd{color:#ffffff;font-size:9pt;font-weight:bold;background:#111111}.dk{background:#111111}.ch{background:#111111}.cht{color:#ffffff;font-size:15pt;font-weight:bold}.chs{color:#bbbbbb;font-size:9pt}</style></head><body>')
 out.append('<p style="font-size:9pt;color:#888888">PREM AI · LINKEDIN CREATIVE · OCTOBER 2026</p>')
 out.append('<h1 style="font-size:30pt">LinkedIn Ad References: Fluso, Prem Enclave, Enclave API</h1>')
-out.append('<p style="font-size:12pt">18 unique ad concepts (3 statics + 3 short videos per product), each paired with a real reference ad from an AI or privacy brand. No two concepts use the same creative mechanic.</p>')
-out.append('<p class="s10"><b>How to use this doc.</b> Every card has two halves. <b>Left:</b> the reference, which is a real frame from the source ad. The link <b>▶ OPEN THE SOURCE AD ↗</b> directly under each image opens the original (Google Docs import drops links on images, so the link sits under the image). Each card also links to that brand\'s live ads in the LinkedIn and Meta Ad Libraries. <b>Right:</b> our concept as an AI-generated mockup or key frame, with the copy, the storyboard and who to aim it at.</p>')
+out.append('<p style="font-size:12pt">18 unique ad concepts (3 statics + 3 short videos per product), each paired with a real reference video from an AI or privacy brand. No two concepts use the same creative mechanic.</p>')
+out.append('<p class="s10"><b>How to use this doc.</b> Each card has two halves. <b>Left: the reference.</b> Every reference is a <b>video</b> (a frame from it is shown), and the label above the frame says exactly what it is: a paid ad, a launch video, a keynote, an explainer, or a third-party upload or coverage. The link <b>▶ WATCH THE SOURCE VIDEO ↗</b> sits directly under each frame, because Google Docs import drops links on images. On static concepts, the reference is a video we borrow the idea from; each card links to that brand\'s live ads in the LinkedIn and Meta Ad Libraries for its real static ads. <b>Right: our concept.</b> For a static it\'s a mockup of the ad; for a video it\'s a still from the storyboard. The copy, storyboard and targeting sit underneath.</p>')
 out.append('<p style="font-size:9pt;color:#9a3412"><b>Before anything runs:</b> the mockups are directional comps made with an image model. Proofread the text inside every image (models misspell), swap in the real logo, fonts and palette, and get product and legal to sign off on each claim (&lt;40ms, post-quantum, "not even we can see inside", zero data retention). These claims come from Prem\'s own launch material.</p>')
 
 # Patterns section
@@ -115,9 +116,10 @@ for key, pname, *_ in PRODUCTS:
         rows += (f'<tr><td class="s9">{e(c["code"])}</td><td class="s9">{e(pname)}</td>'
                  f'<td class="s9">{"Video" if c["format"]=="video" else "Static"}</td>'
                  f'<td class="s9"><b>{e(c["name"])}</b></td><td class="s9">{e(c["mechanic"])}</td>'
-                 f'<td class="s9"><a href="{yt(c["ref"]["yt"])}">{e(c["ref"]["brand"])}: {e(c["ref"]["title"])}</a></td></tr>')
+                 f'<td class="s9"><a href="{yt(c["ref"]["yt"])}">{e(c["ref"]["brand"])}: {e(c["ref"]["title"])}</a></td>'
+                 f'<td class="s9">{e(c["ref"]["kind"])}</td></tr>')
 out.append('<table class="t" border="1" cellpadding="5"><tr class="dk">'
-           + "".join(f'<td class="hd"><b>{h}</b></td>' for h in ["#", "Product", "Format", "Concept", "Mechanic", "Reference"]) + f'</tr>{rows}</table>')
+           + "".join(f'<td class="hd"><b>{h}</b></td>' for h in ["#", "Product", "Our format", "Concept", "Mechanic", "Reference", "Reference type"]) + f'</tr>{rows}</table>')
 
 for key, pname, tagline, goal, vibe, accent in PRODUCTS:
     out.append('<br style="page-break-before:always">')
